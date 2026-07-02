@@ -3,17 +3,30 @@ import school_db
 
 # Configure the web page layout
 st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
-# --- CUSTOM CSS TO FORCE-HIDE ALL WATERMARKS ---
-hide_branding_style = """
+# --- ADVANCED GLOBAL CSS TO STRIP ALL BRANDING & GITHUB LOGOS ---
+global_hide_style = """
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* Completely hide the top banner and page gradient decoration */
+    header {visibility: hidden; height: 0px;}
     [data-testid="stDecoration"] {display: none;}
+    
+    /* Hide the developer hamburger menu icon (top-right) */
+    #MainMenu {visibility: hidden;}
+    
+    /* Hide the GitHub code connection icon globally for all external viewers */
+    #GithubIcon {visibility: hidden; display: none;}
+    .stAppDeployButton {display: none !important;}
+    
+    /* Hide the "Made with Streamlit" footer text completely */
+    footer {visibility: hidden; height: 0px;}
+    
+    /* Strip the "Hosted with Streamlit" floating app badge or status widget */
     [data-testid="stStatusWidget"] {display: none;}
+    .viewerBadge_container__1QSob, .styles_viewerBadge__1yB5_, .viewerBadge_link__1S137 {display: none !important;}
     </style>
 """
-st.markdown(hide_branding_style, unsafe_allow_html=True)
+st.markdown(global_hide_style, unsafe_allow_html=True)
+
 
 st.title("🏆 School Token Portal")
 st.write("Welcome to the school rewards system. PC or phone, this layout responds automatically!")
