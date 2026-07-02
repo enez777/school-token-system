@@ -38,11 +38,18 @@ st.markdown(global_hide_style, unsafe_allow_html=True)
 
 st.title("🏆 School Token Portal")
 
+# --- TOAST GEHEUGENSYSTEM ---
+# Als er een succesbericht is opgeslagen na de herlaadactie, laat hem nu rustig zien!
+if "success_message" in st.session_state and st.session_state.success_message:
+    st.toast(st.session_state.success_message, icon="🏆")
+    st.session_state.success_message = None
+
 # --- LOGIN REGION ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
     st.session_state.student_id = ""
+    st.session_state.success_message = None
 
 if not st.session_state.logged_in:
     st.subheader("🔐 Please Login")
@@ -71,6 +78,7 @@ else:
         st.session_state.logged_in = False
         st.session_state.role = None
         st.session_state.student_id = ""
+        st.session_state.success_message = None
         st.rerun()
 
     data = school_db.load_data()
@@ -90,7 +98,8 @@ else:
         if st.button("Redeem Reward", type="primary", use_container_width=True):
             success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
             if success:
-                st.success(message)
+                st.session_state.success_message = message
+                st.rerun()
             else:
                 st.error(message)
 
@@ -98,7 +107,6 @@ else:
     elif st.session_state.role == "teacher":
         st.header("👨‍🏫 Teacher Management Dashboard")
         
-        # We maken nu 3 tabbladen aan in plaats van 2!
         tab1, tab2, tab3 = st.tabs(["Award Points", "Register Student", "Registered Students"])
         
         with tab1:
@@ -113,7 +121,8 @@ else:
                 if st.button("Grant Points", type="primary", use_container_width=True):
                     success, new_balance, name = school_db.add_points_to_student(target_student, points_to_add)
                     if success:
-                        st.toast(f"✅ Granted {points_to_add} points to {name}! New total: {new_balance}")
+                        # We slaan het bericht eerst op en herladen daarna pas!
+                        st.session_state.success_message = f"✅ Granted {points_to_add} points to {name}! New total: {new_balance}"
                         st.rerun()
                     else:
                         st.error("❌ Transaction failed.")
@@ -129,7 +138,7 @@ else:
                 else:
                     success, message = school_db.register_new_student(new_id, new_name)
                     if success:
-                        st.success(f"✅ {message}")
+                        st.session_state.success_message = f"✅ {message}"
                         st.rerun()
                     else:
                         st.error(f"❌ {message}")
