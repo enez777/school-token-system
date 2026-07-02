@@ -2,30 +2,50 @@ import streamlit as st
 import school_db
 
 # Configure the web page layout
+st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered"
+
+# 1. FORCE THE PLATFORM INTO CLEAN VIEWER MODE (Removes Deploy buttons/Developer bars)
+st.set_option("client.toolbarMode", "viewer")
+
+# Configure the web page layout
 st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
-# --- ADVANCED GLOBAL CSS TO STRIP ALL BRANDING & GITHUB LOGOS ---
+
+# 2. UPDATED STRUCTURAL CSS OVERRIDE (Targets modern Streamlit layout containers)
 global_hide_style = """
     <style>
-    /* Completely hide the top banner and page gradient decoration */
-    header {visibility: hidden; height: 0px;}
-    [data-testid="stDecoration"] {display: none;}
+    /* Completely hide the header toolbar containing the GitHub profile icon and fork buttons */
+    header[data-testid="stHeader"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+    }
     
-    /* Hide the developer hamburger menu icon (top-right) */
-    #MainMenu {visibility: hidden;}
+    /* Remove top decorative line */
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
     
-    /* Hide the GitHub code connection icon globally for all external viewers */
-    #GithubIcon {visibility: hidden; display: none;}
-    .stAppDeployButton {display: none !important;}
+    /* Remove the built-in floating viewer badge container at the bottom */
+    div[class*="viewerBadge_container"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
     
-    /* Hide the "Made with Streamlit" footer text completely */
-    footer {visibility: hidden; height: 0px;}
+    /* Remove the footer watermark element entirely */
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+    }
     
-    /* Strip the "Hosted with Streamlit" floating app badge or status widget */
-    [data-testid="stStatusWidget"] {display: none;}
-    .viewerBadge_container__1QSob, .styles_viewerBadge__1yB5_, .viewerBadge_link__1S137 {display: none !important;}
+    /* Clean up top padding layout caused by removing headers */
+    .block-container {
+        padding-top: 2rem !important;
+    }
     </style>
 """
 st.markdown(global_hide_style, unsafe_allow_html=True)
+
 
 
 st.title("🏆 School Token Portal")
