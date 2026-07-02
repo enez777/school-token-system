@@ -1,48 +1,48 @@
 import streamlit as st
 import school_db
+from streamlit.components.v1 import html  # <-- Add this library import line!
 
-# Configure the web page layout
+# Configure the web page layout (Must execute as the first Streamlit command)
 st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
 
-# 1. FORCE THE PLATFORM INTO CLEAN VIEWER MODE (Removes Deploy buttons/Developer bars)
+# Force the platform toolbar to viewer mode
 st.set_option("client.toolbarMode", "viewer")
 
+# --- NEW JAVASCRIPT BLOCK TO ERASE MOBILE PHONE WATERMARKS ---
+html('''
+<script>
+    // This finds any link element inside the mobile browser window leading to streamlit.io
+    const wipeWatermarks = () => {
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(el => {
+            el.setAttribute("style", "display: none !important; visibility: hidden !important;");
+        });
+        
+        // Locate phone layout footer tags and hide them completely
+        window.top.document.querySelectorAll('footer').forEach(footer => {
+            footer.setAttribute("style", "display: none !important;");
+        });
+    };
+    
+    // Execute instantly, and rerun every 500ms to ensure it never pops back up
+    wipeWatermarks();
+    setInterval(wipeWatermarks, 500);
+</script>
+''', height=0)
 
-# 2. UPDATED STRUCTURAL CSS OVERRIDE (Targets modern Streamlit layout containers)
+# --- BACKUP RE-ENFORCED CSS OVERRIDE FOR TABLETS/DESKTOPS ---
 global_hide_style = """
     <style>
-    /* Completely hide the header toolbar containing the GitHub profile icon and fork buttons */
-    header[data-testid="stHeader"] {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-    
-    /* Remove top decorative line */
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-    
-    /* Remove the built-in floating viewer badge container at the bottom */
-    div[class*="viewerBadge_container"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    
-    /* Remove the footer watermark element entirely */
-    footer {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-    
-    /* Clean up top padding layout caused by removing headers */
-    .block-container {
-        padding-top: 2rem !important;
-    }
+    header[data-testid="stHeader"] { display: none !important; visibility: hidden !important; height: 0px !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    div[class*="viewerBadge_container"] { display: none !important; visibility: hidden !important; }
+    footer { display: none !important; visibility: hidden !important; height: 0px !important; }
+    .block-container { padding-top: 1.5rem !important; }
     </style>
 """
 st.markdown(global_hide_style, unsafe_allow_html=True)
+
+# YOUR EXISTING REWARD PORTAL USER SYSTEM LOGIC CONTINUES DOWN HERE...
+
 
 
 
