@@ -1,35 +1,30 @@
 import streamlit as st
 import school_db
-from streamlit.components.v1 import html  # <-- Add this library import line!
+from streamlit.components.v1 import html
 
-# Configure the web page layout (Must execute as the first Streamlit command)
+# Configure the web page layout (Moet als allereerste Streamlit commando)
 st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
 
-# Force the platform toolbar to viewer mode
+# Forceer mobiele en desktop toolbar deactivatie
 st.set_option("client.toolbarMode", "viewer")
 
-# --- NEW JAVASCRIPT BLOCK TO ERASE MOBILE PHONE WATERMARKS ---
+# --- JAVASCRIPT OM WATERMERKEN TE VERWIJDEREN ---
 html('''
 <script>
-    // This finds any link element inside the mobile browser window leading to streamlit.io
     const wipeWatermarks = () => {
         window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(el => {
             el.setAttribute("style", "display: none !important; visibility: hidden !important;");
         });
-        
-        // Locate phone layout footer tags and hide them completely
         window.top.document.querySelectorAll('footer').forEach(footer => {
             footer.setAttribute("style", "display: none !important;");
         });
     };
-    
-    // Execute instantly, and rerun every 500ms to ensure it never pops back up
     wipeWatermarks();
     setInterval(wipeWatermarks, 500);
 </script>
 ''', height=0)
 
-# --- BACKUP RE-ENFORCED CSS OVERRIDE FOR TABLETS/DESKTOPS ---
+# --- CSS OVERRIDE VOOR SCHONE LAYOUT ---
 global_hide_style = """
     <style>
     header[data-testid="stHeader"] { display: none !important; visibility: hidden !important; height: 0px !important; }
@@ -41,13 +36,7 @@ global_hide_style = """
 """
 st.markdown(global_hide_style, unsafe_allow_html=True)
 
-# YOUR EXISTING REWARD PORTAL USER SYSTEM LOGIC CONTINUES DOWN HERE...
-
-
-
-
 st.title("🏆 School Token Portal")
-st.write("Welcome to the school rewards system. PC or phone, this layout responds automatically!")
 
 # --- LOGIN REGION ---
 if "logged_in" not in st.session_state:
@@ -77,7 +66,6 @@ if not st.session_state.logged_in:
 
 # --- APPLICATION DASHBOARD ---
 else:
-    # Sidebar logout option (looks like an app menu on mobile phones)
     st.sidebar.write(f"Logged in as: **{st.session_state.role.title()}**")
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
@@ -87,12 +75,11 @@ else:
 
     data = school_db.load_data()
 
-    # STUDENT PORTAL VIEW
+    # --- STUDENT VIEW ---
     if st.session_state.role == "student":
         st.header("🎓 Student Dashboard")
         student_info = data["students"][st.session_state.student_id]
         
-        # Display balance inside a clean visual box
         st.metric(label=f"Welcome back, {student_info['name']}!", value=f"{student_info['points']} Tokens")
         
         st.write("---")
@@ -107,29 +94,50 @@ else:
             else:
                 st.error(message)
 
-    # TEACHER PORTAL VIEW
+    # --- TEACHER VIEW ---
     elif st.session_state.role == "teacher":
         st.header("👨‍🏫 Teacher Management Dashboard")
         
-        # Streamlit automatically sorts this side-by-side on PCs, stack vertically on mobile phones!
-        tab1, tab2 = st.tabs(["Award Points", "Registered Students"])
+        # We maken nu 3 tabbladen aan in plaats van 2!
+        tab1, tab2, tab3 = st.tabs(["Award Points", "Register Student", "Registered Students"])
         
         with tab1:
             st.subheader("➕ Award Tokens")
             student_list = list(data.get("students", {}).keys())
-            target_student = st.selectbox("Select Student ID:", student_list)
-            points_to_add = st.number_input("Number of points to grant:", min_value=1, step=1, value=10)
-            
-            if st.button("Grant Points", type="primary", use_container_width=True):
-                success, new_balance, name = school_db.add_points_to_student(target_student, points_to_add)
-                if success:
-                    st.success(f"✅ Granted {points_to_add} points to {name}! New total: {new_balance}")
-                else:
-                    st.error("❌ Transaction failed.")
-                    
+            if not student_list:
+                st.warning("⚠️ No students registered yet. Please go to the Register tab first.")
+            else:
+                target_student = st.selectbox("Select Student ID:", student_list)
+                points_to_add = st.number_input("Number of points to grant:", min_value=1, step=1, value=10)
+                
+                if st.button("Grant Points", type="primary", use_container_width=True):
+                    success, new_balance, name = school_db.add_points_to_student(target_student, points_to_add)
+                    if success:
+                        st.success(f"✅ Granted {points_to_add} points to {name}! New total: {new_balance}")
+                        st.rerun()
+                    else:
+                        st.error("❌ Transaction failed.")
+                        
         with tab2:
+            st.subheader("📝 Register New Student")
+            new_id = st.text_input("Create Student ID (e.g., S101)").strip().upper()
+            new_name = st.text_input("Enter Student Name").strip()
+            
+            if st.button("Register Student", type="primary", use_container_width=True):
+                if not new_id or not new_name:
+                    st.error("❌ Please fill in both fields.")
+                else:
+                    success, message = school_db.register_new_student(new_id, new_name)
+                    if success:
+                        st.success(f"✅ {message}")
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {message}")
+                    
+        with tab3:
             st.subheader("📊 Roster Overview")
-            # Loop and print student point tallies nicely
-            for sid, info in data.get("students", {}).items():
-                st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
-
+            if not data.get("students"):
+                st.write("*No students registered in the database yet.*")
+            else:
+                for sid, info in data.get("students", {}).items():
+                    st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
