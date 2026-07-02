@@ -113,7 +113,7 @@ else:
                 if st.button("Grant Points", type="primary", use_container_width=True):
                     success, new_balance, name = school_db.add_points_to_student(target_student, points_to_add)
                     if success:
-                        st.success(f"✅ Granted {points_to_add} points to {name}! New total: {new_balance}")
+                        st.toast(f"✅ Granted {points_to_add} points to {name}! New total: {new_balance}")
                         st.rerun()
                     else:
                         st.error("❌ Transaction failed.")
