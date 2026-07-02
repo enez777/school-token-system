@@ -1,0 +1,16 @@
+{
+    "students": {
+        "S101": {
+            "name": "Alex",
+            "points": 20
+        },
+        "S102": {
+            "name": "Jordan",
+            "points": 15
+        }
+    },
+    "rewards": {
+        "movie_ticket": 40,
+        "canteen_coupon": 20
+    }
+}
