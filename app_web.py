@@ -3,6 +3,17 @@ import school_db
 
 # Configure the web page layout
 st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
+# --- CUSTOM CSS TO FORCE-HIDE ALL WATERMARKS ---
+hide_branding_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
+    </style>
+"""
+st.markdown(hide_branding_style, unsafe_allow_html=True)
 
 st.title("🏆 School Token Portal")
 st.write("Welcome to the school rewards system. PC or phone, this layout responds automatically!")
