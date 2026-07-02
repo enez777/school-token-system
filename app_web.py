@@ -2,13 +2,11 @@ import streamlit as st
 import school_db
 
 # Configure the web page layout
-st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered"
+st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
 
 # 1. FORCE THE PLATFORM INTO CLEAN VIEWER MODE (Removes Deploy buttons/Developer bars)
 st.set_option("client.toolbarMode", "viewer")
 
-# Configure the web page layout
-st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
 
 # 2. UPDATED STRUCTURAL CSS OVERRIDE (Targets modern Streamlit layout containers)
 global_hide_style = """
