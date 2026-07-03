@@ -1,5 +1,5 @@
 from supabase import create_client, Client
-import school_db
+
 # =========================================================================
 # ⚠️ CRUCIAL: COPY THESE TWO STRINGS DIRECTLY FROM YOUR SUPABASE PROJECT!
 # Go to Supabase -> Project Settings (Gear icon) -> API -> Project API Keys
@@ -9,26 +9,20 @@ SUPABASE_KEY = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
 
 def load_data():
     """Fetches all students dynamically from the cloud database to match your old format."""
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    response = supabase.table("students").select("*").execute()
-
-    # Restructure database rows back into a dictionary so app_web.py doesn't break
-    formatted_students = {}
-    for row in response.data:
-        formatted_students[row["id"]] = {"name": row["name"], "points": row["points"]}
-
-    # Hardcoded backup rewards since they don't change often
-    return {
-        "students": formatted_students,
-        "rewards": {"movie ticket": 100, "canteen coupon": 60, "pop the lock credit": 125}
-    }
-
+    try:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        response = supabase.table("students").select("*").execute()
         
-   
-
-
-
-        
+        # Restructure database rows back into a dictionary so app_web.py doesn't break
+        formatted_students = {}
+        for row in response.data:
+            formatted_students[row["id"]] = {"name": row["name"], "points": row["points"]}
+            
+        # Hardcoded backup rewards since they don't change often
+        return {
+            "students": formatted_students,
+            "rewards": {"movie_ticket": 40, "canteen_coupon": 20}
+        }
     except Exception as e:
         print(f"Database Error: {e}")
         return {"students": {}, "rewards": {}}
@@ -74,4 +68,3 @@ def register_new_student(student_id, name):
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
     supabase.table("students").insert({"id": student_id, "name": name, "points": 0}).execute()
     return True, f"Successfully registered {name} in the cloud!"
-
