@@ -21,7 +21,7 @@ def load_data():
         # Hardcoded backup rewards since they don't change often
         return {
             "students": formatted_students,
-            "rewards": {"movie_ticket": 40, "canteen_coupon": 20}
+            "rewards": {"movie ticket": 100, "canteen coupon": 60, "pop the lock credit":125}
         }
     except Exception as e:
         print(f"Database Error: {e}")
