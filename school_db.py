@@ -17,13 +17,14 @@ def load_data():
         formatted_students = {}
         for row in response.data:
             formatted_students[row["id"]] = {"name": row["name"], "points": row["points"]}
-            
         # Hardcoded backup rewards since they don't change often
-  # Hardcoded backup rewards since they don't change often
-return {
-    "students": formatted_students,
-    "rewards": {"movie ticket": 100, "canteen coupon": 60, "pop the lock credit": 125}
-}
+    return {
+        "students": formatted_students,
+        "rewards": {"movie ticket": 100, "canteen coupon": 60, "pop the lock credit": 125}
+    }
+        
+   
+
 
 
         
