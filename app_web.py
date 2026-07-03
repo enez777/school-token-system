@@ -105,7 +105,7 @@ else:
 
     # --- TEACHER VIEW ---
     elif st.session_state.role == "teacher":
-        st.header("👨‍🏫 Teacher Management Dashboard")
+        st.header("👨‍🏫 student Management Dashboard")
         
         tab1, tab2, tab3 = st.tabs(["Award Points", "Register Student", "Registered Students"])
         
