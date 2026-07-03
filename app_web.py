@@ -1,7 +1,7 @@
 import streamlit as st
 import school_db
 from streamlit.components.v1 import html
-st.set_page_config(initial_sidebar_state="collapsed")
+st.set_page_config(initial_sidebar_state="expanded")
 # Configure the web page layout (Moet als allereerste Streamlit commando)
 st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
 
