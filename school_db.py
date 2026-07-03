@@ -9,19 +9,20 @@ SUPABASE_KEY = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
 
 def load_data():
     """Fetches all students dynamically from the cloud database to match your old format."""
-    try:
-        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        response = supabase.table("students").select("*").execute()
-        
-        # Restructure database rows back into a dictionary so app_web.py doesn't break
-        formatted_students = {}
-        for row in response.data:
-            formatted_students[row["id"]] = {"name": row["name"], "points": row["points"]}
-        # Hardcoded backup rewards since they don't change often
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    response = supabase.table("students").select("*").execute()
+
+    # Restructure database rows back into a dictionary so app_web.py doesn't break
+    formatted_students = {}
+    for row in response.data:
+        formatted_students[row["id"]] = {"name": row["name"], "points": row["points"]}
+
+    # Hardcoded backup rewards since they don't change often
     return {
         "students": formatted_students,
         "rewards": {"movie ticket": 100, "canteen coupon": 60, "pop the lock credit": 125}
     }
+
         
    
 
