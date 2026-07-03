@@ -129,7 +129,7 @@ else:
                         
         with tab2:
             st.subheader("📝 Register New Student")
-            new_id = st.text_input("Create Student ID (e.g., S101)").strip().upper()
+            new_id = st.text_input("Create Student ID (e.g., 12345)").strip().upper()
             new_name = st.text_input("Enter Student Name").strip()
             
             if st.button("Register Student", type="primary", use_container_width=True):
