@@ -1,5 +1,5 @@
 from supabase import create_client, Client
-import school_db.py
+import school_db
 # =========================================================================
 # ⚠️ CRUCIAL: COPY THESE TWO STRINGS DIRECTLY FROM YOUR SUPABASE PROJECT!
 # Go to Supabase -> Project Settings (Gear icon) -> API -> Project API Keys
