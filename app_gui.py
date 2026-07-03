@@ -69,7 +69,7 @@ class SchoolTokenApp(ctk.CTk):
         self.dash_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
         # Title Label
-        role_title = "👨‍🏫 Teacher Dashboard" if self.current_user_role == "teacher" else "🎓 Student Portal"
+        role_title = "👨‍🏫 student management Dashboard" if self.current_user_role == "teacher" else "🎓 Student Portal"
         self.title_label = ctk.CTkLabel(self.dash_frame, text=role_title, font=ctk.CTkFont(size=24, weight="bold"))
         self.title_label.pack(pady=15)
         
