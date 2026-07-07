@@ -150,31 +150,42 @@ else:
             else:
                 for sid, info in data.get("students", {}).items():
                     st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
-        
+
         with tab4:
-            st.subheader("📋 Openstaande aanvragen van leerlingen")
-            
-            import pandas as pd
-            
-            # Haal de claims op uit Supabase
-       response = supabase.table("claims").select("*").eq("status", "open").order("created_at").execute()
-       open_claims = response.data
+        st.subheader("📋 Pending Student Reward Claims")
         
-        if not open_claims:
-                st.info("Er zijn op dit moment geen openstaande claims.")
-        else:
-            for claim in open_claims:
-                tijdstip = pd.to_datetime(claim["created_at"]).strftime("%d-%m-%Y %H:%M")
-                col1, col2, col3, col4 = st.columns()
+        import pandas as pd
+        
+        try:
+            # Fetch claims from Supabase (split into short lines to prevent layout cutting)
+            query = supabase.table("claims").select("*")
+            response = query.eq("status", "open").order("created_at").execute()
+            open_claims = response.data
+
+            if not open_claims:
+                st.info("There are currently no pending claims. Great job!")
+            else:
+                for claim in open_claims:
+                    # Make the timestamp human-readable
+                    timestamp = pd.to_datetime(claim["created_at"]).strftime("%d-%m-%Y %H:%M")
                     
-                with col1:
-                    st.write(f"👤 **{claim['student_name']}**")
-                with col2:
-                    st.write(f"🎟️ {claim['reward_name']}")
-                with col3:
-                    st.write(f"📅 {tijdstip}") 
-                with col4:
-                    if st.button("Gegeven ✓", key=f"claim_{claim['id']}"):
-                        supabase.table("claims").update({"status": "Gegeven"}).eq("id", claim["id"]).execute()
-                        st.success("Bijgewerkt!")
-                        st.rerun()
+                    # Create 4 columns for a clean table layout
+                    col1, col2, col3, col4 = st.columns()
+                    
+                    with col1:
+                        st.write(f"👤 **{claim['student_name']}**")
+                    with col2:
+                        st.write(f"🎟️ {claim['reward_name']}")
+                    with col3:
+                        st.write(f"📅 {timestamp}") 
+                    with col4:
+                        # Button to mark the reward as handed out
+                        if st.button("Given ✓", key=f"claim_{claim['id']}"):
+                            # Update the status in Supabase to 'Given'
+                            supabase.table("claims").update({"status": "Given"}).eq("id", claim["id"]).execute()
+                            st.success("Claim updated successfully!")
+                            st.rerun()
+                            
+        except Exception as e:
+            st.error(f"An error occurred while connecting to the database: {e}")
+           
