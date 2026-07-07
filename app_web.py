@@ -155,7 +155,7 @@ else:
             st.subheader("📋 Pending Student Reward Claims")
             
             import pandas as pd
-            
+            global supabase
             try:
                 # Fetch claims from Supabase (split into short lines to prevent layout cutting)
                 query = supabase.table("claims").select("*")
