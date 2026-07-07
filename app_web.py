@@ -84,7 +84,7 @@ else:
     data = school_db.load_data()
 
   # --- STUDENT VIEW ---
-elif st.session_state.role == "student":
+if st.session_state.role == "student":
     st.header("🎒 Student Dashboard")
     student_info = data["students"][st.session_state.student_id]
 
