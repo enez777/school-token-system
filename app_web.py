@@ -152,37 +152,47 @@ else:
                     st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
 
        
-        with tab4:
-            st.subheader("📋 Pending Student Reward Claims")
-            
-            # 1. Fetch live claims directly from your existing 'supabase' connector instance
-            try:
-                query = supabase.table("claims").select("*")
-                response = query.eq("status", "open").order("created_at").execute()
-                open_claims = response.data
-    
-                if not open_claims:
-                    st.info("There are currently no pending claims. Great job!")
-                else:
-                    for claim in open_claims:
-                        # 2. Extract timestamp string safely without complex pandas converters
-                        raw_time = str(claim.get("created_at", ""))
-                        clean_time = raw_time.split(".")[0].replace("T", " ") if "T" in raw_time else raw_time
-                        
-                        col1, col2, col3, col4 = st.columns()
-                        
-                        with col1:
-                            st.write(f"👤 **{claim['student_name']}**")
-                        with col2:
-                            st.write(f"🎟️ {claim['reward_name']}")
-                        with col3:
-                            st.write(f"📅 {clean_time}") 
-                        with col4:
-                            # 3. Fulfillment button to update and remove from list
-                            if st.button("Given ✓", key=f"claim_{claim['id']}"):
-                                supabase.table("claims").update({"status": "Given"}).eq("id", claim["id"]).execute()
-                                st.success("Claim updated successfully!")
-                                st.rerun()
-                                
-            except Exception as e:
-                st.error(f"Database connection trace error: {e}")
+           with tab4:
+        st.subheader("📋 Pending Student Reward Claims")
+        
+        import pandas as pd
+        from supabase import create_client
+        
+        # 1. Jouw werkende inloggegevens (zorg dat je hier je echte URL en Key plakt!)
+        url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+        key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+        supabase_local = create_client(url, key)
+        
+        try:
+            # 2. Haal alle openstaande claims op via supabase_local
+            query = supabase_local.table("claims").select("*")
+            response = query.eq("status", "open").order("created_at").execute()
+            open_claims = response.data
+
+            if not open_claims:
+                st.info("There are currently no pending claims. Great job!")
+            else:
+                for claim in open_claims:
+                    # Maak de datum en tijd netjes leesbaar
+                    raw_time = str(claim.get("created_at", ""))
+                    clean_time = raw_time.split(".")[0].replace("T", " ") if "T" in raw_time else raw_time
+                    
+                    # Maak de 4 kolommen voor de lay-out
+                    col1, col2, col3, col4 = st.columns()
+                    
+                    with col1:
+                        st.write(f"👤 **{claim['student_name']}**")
+                    with col2:
+                        st.write(f"🎟️ {claim['reward_name']}")
+                    with col3:
+                        st.write(f"📅 {clean_time}") 
+                    with col4:
+                        # 3. De afvink-knop
+                        if st.button("Given ✓", key=f"claim_{claim['id']}"):
+                            # Update de status in Supabase naar 'Given' via supabase_local
+                            supabase_local.table("claims").update({"status": "Given"}).eq("id", claim["id"]).execute()
+                            st.success("Claim updated successfully!")
+                            st.rerun()
+                            
+        except Exception as e:
+            st.error(f"Database connection trace error: {e}")
