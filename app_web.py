@@ -59,7 +59,7 @@ if not st.session_state.logged_in:
     if st.button("Login", use_container_width=True):
         data = school_db.load_data()
         
-        if user_input == "TEACHER" and password_input == "admin123":
+        if user_input == "TEACHER" and password_input == "hetcollegevos2027?":
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
             st.rerun()
