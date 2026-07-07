@@ -158,7 +158,7 @@ else:
             
             # Haal de claims op uit Supabase
        response = supabase.table("claims").select("*").eq("status", "open").order("created_at").execute()
-        open_claims = response.data
+       open_claims = response.data
         
         if not open_claims:
                 st.info("Er zijn op dit moment geen openstaande claims.")
