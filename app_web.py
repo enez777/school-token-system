@@ -154,7 +154,7 @@ else:
         with tab4:
              st.subheader("📋 Openstaande aanvragen van leerlingen")
             
-            import pandas as pd
+             import pandas as pd
             
             # Haal de claims op uit Supabase
             response = supabase.table("claims").select("*").eq("status", "open").order("created_at").execute()
