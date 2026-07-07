@@ -107,7 +107,7 @@ else:
     elif st.session_state.role == "teacher":
         st.header("👨‍🏫 student Management Dashboard")
         
-        tab1, tab2, tab3 = st.tabs(["Award Points", "Register Student", "Registered Students"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims"])
         
         with tab1:
             st.subheader("➕ Award Tokens")
@@ -150,3 +150,30 @@ else:
             else:
                 for sid, info in data.get("students", {}).items():
                     st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
+with tab4:
+    st.subheader("📋 Openstaande aanvragen van leerlingen")
+    
+    import pandas as pd
+    
+    # Haal de claims op uit Supabase
+    response = supabase.table("claims").select("*").eq("status", "open").order("created_at").execute()
+    open_claims = response.data
+
+    if not open_claims:
+        st.info("Er zijn op dit moment geen openstaande claims.")
+    else:
+        for claim in open_claims:
+            tijdstip = pd.to_datetime(claim["created_at"]).strftime("%d-%m-%Y %H:%M")
+            col1, col2, col3, col4 = st.columns()
+            
+            with col1:
+                st.write(f"👤 **{claim['student_name']}**")
+            with col2:
+                st.write(f"🎟️ {claim['reward_name']}")
+            with col3:
+                st.write(f"📅 {tijdstip}") 
+            with col4:
+                if st.button("Gegeven ✓", key=f"claim_{claim['id']}"):
+                    supabase.table("claims").update({"status": "Gegeven"}).eq("id", claim["id"]).execute()
+                    st.success("Bijgewerkt!")
+                    st.rerun()
