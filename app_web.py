@@ -152,7 +152,7 @@ else:
                     st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
 
        
-       with tab4:
+        with tab4:
             st.subheader("📋 Pending Student Reward Claims")
             
             # 1. Fetch live claims directly from your existing 'supabase' connector instance
