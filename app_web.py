@@ -155,10 +155,16 @@ else:
             st.subheader("📋 Pending Student Reward Claims")
             
             import pandas as pd
-            global supabase
+            from supabase import create_client
+            
+            # 🔴 PASTE YOUR WORKING URL AND KEY FROM THE TOP OF YOUR FILE HERE:
+            url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+            key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+            supabase_local = create_client(url, key)
+            
             try:
-                # Fetch claims from Supabase (split into short lines to prevent layout cutting)
-                query = supabase.table("claims").select("*")
+                # Fetch claims from Supabase using the local connection channel
+                query = supabase_local.table("claims").select("*")
                 response = query.eq("status", "open").order("created_at").execute()
                 open_claims = response.data
     
@@ -166,10 +172,10 @@ else:
                     st.info("There are currently no pending claims. Great job!")
                 else:
                     for claim in open_claims:
-                        # Make the timestamp human-readable
+                        # Formats the timestamp nicely for the teachers
                         timestamp = pd.to_datetime(claim["created_at"]).strftime("%d-%m-%Y %H:%M")
                         
-                        # Create 4 columns for a clean table layout
+                        # Generates 4 aligned layout columns
                         col1, col2, col3, col4 = st.columns()
                         
                         with col1:
@@ -179,13 +185,12 @@ else:
                         with col3:
                             st.write(f"📅 {timestamp}") 
                         with col4:
-                            # Button to mark the reward as handed out
+                            # Clear button to mark the reward as handed over
                             if st.button("Given ✓", key=f"claim_{claim['id']}"):
-                                # Update the status in Supabase to 'Given'
-                                supabase.table("claims").update({"status": "Given"}).eq("id", claim["id"]).execute()
+                                # Update the claim row status inside Supabase to 'Given'
+                                supabase_local.table("claims").update({"status": "Given"}).eq("id", claim["id"]).execute()
                                 st.success("Claim updated successfully!")
                                 st.rerun()
                                 
             except Exception as e:
                 st.error(f"An error occurred while connecting to the database: {e}")
-               
