@@ -84,24 +84,36 @@ else:
     data = school_db.load_data()
 
     # --- STUDENT VIEW ---
-    if st.session_state.role == "student":
-        st.header("🎓 Student Dashboard")
-        student_info = data["students"][st.session_state.student_id]
-        
-        st.metric(label=f"Welcome back, {student_info['name']}!", value=f"{student_info['points']} Tokens")
-        
-        st.write("---")
-        st.subheader("🎁 Redeem Rewards")
-        available_rewards = list(data.get("rewards", {}).keys())
-        selected_reward = st.selectbox("Choose your reward:", available_rewards)
-        
-        if st.button("Redeem Reward", type="primary", use_container_width=True):
-            success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
-            if success:
-                st.session_state.success_message = message
-                st.rerun()
-            else:
-                st.error(message)
+   if st.session_state.role == "student":
+    st.header("🎒 Student Dashboard")
+    student_info = data["students"][st.session_state.student_id]
+
+    st.metric(label=f"Welcome back, {student_info['name']}!", value=f"{student_info['points']} Tokens")
+
+    st.write("---")
+    st.subheader("🎁 Redeem Rewards")
+    available_rewards = list(data.get("rewards", {}).keys())
+    selected_reward = st.selectbox("Choose your reward:", available_rewards)
+
+    if st.button("Redeem Reward", type="primary", use_container_width=True):
+        success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
+        if success:
+            
+            # 🟢 DIT STUKJE STUURT DE CLAIM DIRECT DOOR NAAR DE DOCENT:
+            try:
+                supabase.table("claims").insert({
+                    "student_name": student_info['name'],
+                    "reward_name": selected_reward,
+                    "status": "open"
+                }).execute()
+            except Exception as e:
+                # Als Supabase een hikje heeft, waarschuwt de app zonder te crashen
+                st.warning(f"Tokens subtracted, but teacher database alert failed: {e}")
+                
+            st.session_state.success_message = message
+            st.rerun()
+        else:
+            st.error(message)
 
     # --- TEACHER VIEW ---
     elif st.session_state.role == "teacher":
