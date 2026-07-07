@@ -152,40 +152,40 @@ else:
                     st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
 
         with tab4:
-        st.subheader("📋 Pending Student Reward Claims")
-        
-        import pandas as pd
-        
-        try:
-            # Fetch claims from Supabase (split into short lines to prevent layout cutting)
-            query = supabase.table("claims").select("*")
-            response = query.eq("status", "open").order("created_at").execute()
-            open_claims = response.data
-
-            if not open_claims:
-                st.info("There are currently no pending claims. Great job!")
-            else:
-                for claim in open_claims:
-                    # Make the timestamp human-readable
-                    timestamp = pd.to_datetime(claim["created_at"]).strftime("%d-%m-%Y %H:%M")
-                    
-                    # Create 4 columns for a clean table layout
-                    col1, col2, col3, col4 = st.columns()
-                    
-                    with col1:
-                        st.write(f"👤 **{claim['student_name']}**")
-                    with col2:
-                        st.write(f"🎟️ {claim['reward_name']}")
-                    with col3:
-                        st.write(f"📅 {timestamp}") 
-                    with col4:
-                        # Button to mark the reward as handed out
-                        if st.button("Given ✓", key=f"claim_{claim['id']}"):
-                            # Update the status in Supabase to 'Given'
-                            supabase.table("claims").update({"status": "Given"}).eq("id", claim["id"]).execute()
-                            st.success("Claim updated successfully!")
-                            st.rerun()
-                            
-        except Exception as e:
-            st.error(f"An error occurred while connecting to the database: {e}")
-           
+            st.subheader("📋 Pending Student Reward Claims")
+            
+            import pandas as pd
+            
+            try:
+                # Fetch claims from Supabase (split into short lines to prevent layout cutting)
+                query = supabase.table("claims").select("*")
+                response = query.eq("status", "open").order("created_at").execute()
+                open_claims = response.data
+    
+                if not open_claims:
+                    st.info("There are currently no pending claims. Great job!")
+                else:
+                    for claim in open_claims:
+                        # Make the timestamp human-readable
+                        timestamp = pd.to_datetime(claim["created_at"]).strftime("%d-%m-%Y %H:%M")
+                        
+                        # Create 4 columns for a clean table layout
+                        col1, col2, col3, col4 = st.columns()
+                        
+                        with col1:
+                            st.write(f"👤 **{claim['student_name']}**")
+                        with col2:
+                            st.write(f"🎟️ {claim['reward_name']}")
+                        with col3:
+                            st.write(f"📅 {timestamp}") 
+                        with col4:
+                            # Button to mark the reward as handed out
+                            if st.button("Given ✓", key=f"claim_{claim['id']}"):
+                                # Update the status in Supabase to 'Given'
+                                supabase.table("claims").update({"status": "Given"}).eq("id", claim["id"]).execute()
+                                st.success("Claim updated successfully!")
+                                st.rerun()
+                                
+            except Exception as e:
+                st.error(f"An error occurred while connecting to the database: {e}")
+               
