@@ -83,38 +83,38 @@ else:
 
     data = school_db.load_data()
 
-  # --- STUDENT VIEW ---
-elif st.session_state.role == "student":
-    st.header("🎒 Student Dashboard")
-    student_info = data["students"][st.session_state.student_id]
+    # --- STUDENT VIEW ---
+   elif st.session_state.role == "student":
+        st.header("🎒 Student Dashboard")
+        student_info = data["students"][st.session_state.student_id]
 
-    st.metric(label=f"Welcome back, {student_info['name']}!", value=f"{student_info['points']} Tokens")
+        st.metric(label=f"Welcome back, {student_info['name']}!", value=f"{student_info['points']} Tokens")
 
-    st.write("---")
-    st.subheader("🎁 Redeem Rewards")
-    available_rewards = list(data.get("rewards", {}).keys())
-    selected_reward = st.selectbox("Choose your reward:", available_rewards)
+        st.write("---")
+        st.subheader("🎁 Redeem Rewards")
+        available_rewards = list(data.get("rewards", {}).keys())
+        selected_reward = st.selectbox("Choose your reward:", available_rewards)
 
-    if st.button("Redeem Reward", type="primary", use_container_width=True):
-        success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
-        if success:
-            # Stuur de claim direct door naar Supabase
-            try:
-                supabase.table("claims").insert({
-                    "student_name": student_info['name'],
-                    "reward_name": selected_reward,
-                    "status": "open"
-                }).execute()
-            except Exception as e:
-                st.warning(f"Tokens subtracted, but teacher database alert failed: {e}")
-                
-            st.session_state.success_message = message
-            st.rerun()
-        else:
-            st.error(message)
+        if st.button("Redeem Reward", type="primary", use_container_width=True):
+            success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
+            if success:
+                # 🟢 Logs the transaction automatically inside your Supabase claims table
+                try:
+                    supabase.table("claims").insert({
+                        "student_name": student_info['name'],
+                        "reward_name": selected_reward,
+                        "status": "open"
+                    }).execute()
+                except Exception as e:
+                    st.warning(f"Tokens subtracted, but teacher database alert failed: {e}")
+                    
+                st.session_state.success_message = message
+                st.rerun()
+            else:
+                st.error(message)
 
     # --- TEACHER VIEW ---
-    if st.session_state.role == "teacher":
+    elif st.session_state.role == "teacher":
         st.header("👨‍🏫 student Management Dashboard")
         
         tab1, tab2, tab3, tab4 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims"])
