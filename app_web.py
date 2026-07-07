@@ -173,7 +173,7 @@ else:
                     st.write(f"🎟️ {claim['reward_name']}")
                 with col3:
                     st.write(f"📅 {tijdstip}") 
-                 with col4:
+                with col4:
                     if st.button("Gegeven ✓", key=f"claim_{claim['id']}"):
                         supabase.table("claims").update({"status": "Gegeven"}).eq("id", claim["id"]).execute()
                         st.success("Bijgewerkt!")
