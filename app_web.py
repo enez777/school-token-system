@@ -83,7 +83,7 @@ else:
 
     data = school_db.load_data()
 
-   # --- STUDENT VIEW ---
+ # --- STUDENT VIEW ---
 if st.session_state.role == "student":
     st.header("🎒 Student Dashboard")
     student_info = data["students"][st.session_state.student_id]
@@ -98,21 +98,11 @@ if st.session_state.role == "student":
     if st.button("Redeem Reward", type="primary", use_container_width=True):
         success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
         if success:
-            # 🟢 Send the transaction directly to your Supabase claims table
-            try:
-                supabase.table("claims").insert({
-                    "student_name": student_info['name'],
-                    "reward_name": selected_reward,
-                    "status": "open"
-                }).execute()
-            except Exception as e:
-                # Displays warning if network drops but doesn't halt token deductions
-                st.warning(f"Tokens subtracted, but teacher database log failed: {e}")
-                
             st.session_state.success_message = message
             st.rerun()
         else:
             st.error(message)
+
 
 
     # --- TEACHER VIEW ---
