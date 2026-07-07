@@ -157,7 +157,7 @@ else:
             import pandas as pd
             
             # Haal de claims op uit Supabase
-         response = supabase.table("claims").select("*").eq("status", "open").order("created_at").execute()
+        response = supabase.table("claims").select("*").eq("status", "open").order("created_at").execute()
         open_claims = response.data
         
         if not open_claims:
