@@ -84,7 +84,7 @@ else:
     data = school_db.load_data()
 
   # --- STUDENT VIEW ---
-elif st.session_state.role == "student":
+if st.session_state.role == "student":
     st.header("🎒 Student Dashboard")
     student_info = data["students"][st.session_state.student_id]
 
@@ -98,7 +98,7 @@ elif st.session_state.role == "student":
     if st.button("Redeem Reward", type="primary", use_container_width=True):
         success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
         if success:
-            # Stuur de claim direct door naar Supabase
+            # 🟢 Dit stuurt de claim direct live naar jouw Supabase claims-tabel
             try:
                 supabase.table("claims").insert({
                     "student_name": student_info['name'],
@@ -113,8 +113,9 @@ elif st.session_state.role == "student":
         else:
             st.error(message)
 
+
     # --- TEACHER VIEW ---
-    if st.session_state.role == "teacher":
+    elif st.session_state.role == "teacher":
         st.header("👨‍🏫 student Management Dashboard")
         
         tab1, tab2, tab3, tab4 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims"])
