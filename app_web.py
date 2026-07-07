@@ -159,7 +159,7 @@ else:
             from supabase import create_client
             
             # 1. Your working database credentials
-            url = "https://iyajpmuprtpsulwkwpvt.supabase.co/rest/v1/"
+            url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
             key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
             supabase_local = create_client(url, key)
             
