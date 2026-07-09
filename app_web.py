@@ -192,7 +192,7 @@ elif st.session_state.role == "teacher":
                         clean_time = raw_time.split(".")[0].replace("T", " ") if "T" in raw_time else raw_time
                         
                         # Setup the 4 horizontal display columns
-                        col1, col2, col3, col4 = st.columns()
+                        col1, col2, col3, col4 = st.columns(spec=4)
                         
                         with col1:
                             st.write(f"👤 **{claim['student_name']}**")
