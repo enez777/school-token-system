@@ -98,7 +98,10 @@ if st.session_state.role == "student":
         if st.button("Redeem Reward", type="primary", use_container_width=True):
             success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
             if success:
-                global supabase
+                from supabase import create_client
+                url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+                key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+                supabase = create_client(url, key)
                 # 🟢 Logs the transaction automatically inside your Supabase claims table
                 try:
                     supabase.table("claims").insert({
