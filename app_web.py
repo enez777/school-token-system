@@ -177,36 +177,38 @@ elif st.session_state.role == "teacher":
             key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
             supabase_local = create_client(url, key)
             
-# 1. Use the clean fragment context manager (no custom def or function call needed!)
-with st.fragment(run_every=5):
-    try:
-        # 2. Fetch pending claims using the correct local connection variable
-        query = supabase_local.table("claims").select("*")
-        response = query.eq("status", "open").order("created_at").execute()
-        open_claims = response.data
+# 1. Use an auto-refresh helper to quietly update the page every 5 seconds
+from streamlit_autorefresh import st_autorefresh
+st_autorefresh(interval=5000, key="claims_auto_sync")
 
-        if not open_claims:
-            st.info("There are currently no pending claims. Great job!")
-        else:
-            for claim in open_claims:
-                # Clean up the timestamp format
-                raw_time = str(claim.get("created_at", ""))
-                clean_time = raw_time.split(".").replace("T", " ") if "T" in raw_time else raw_time
+try:
+    # 2. Fetch pending claims using the correct local connection variable
+    query = supabase_local.table("claims").select("*")
+    response = query.eq("status", "open").order("created_at").execute()
+    open_claims = response.data
 
-                col1, col2, col3, col4 = st.columns(spec=4)
+    if not open_claims:
+        st.info("There are currently no pending claims. Great job!")
+    else:
+        for claim in open_claims:
+            # Clean up the timestamp format
+            raw_time = str(claim.get("created_at", ""))
+            clean_time = raw_time.split(".").replace("T", " ") if "T" in raw_time else raw_time
 
-                with col1:
-                    st.write(f"👤 **{claim['student_name']}**")
-                with col2:
-                    st.write(f"🎟️ {claim['reward_name']}")
-                with col3:
-                    st.write(f"📅 {clean_time}")
-                with col4:
-                    if st.button("Given ✔️", key=f"claim_{claim['id']}"):
-                        # 3. Update the claim row status inside Supabase to 'Given'
-                        supabase_local.table("claims").update({"status": "Given"}).eq("id", claim['id']).execute()
-                        st.success("Claim updated successfully!")
-                        st.rerun()
+            col1, col2, col3, col4 = st.columns(spec=4)
 
-    except Exception as e:
-        st.error(f"Database connection trace error: {e}")
+            with col1:
+                st.write(f"👤 **{claim['student_name']}**")
+            with col2:
+                st.write(f"🎟️ {claim['reward_name']}")
+            with col3:
+                st.write(f"📅 {clean_time}")
+            with col4:
+                if st.button("Given ✔️", key=f"claim_{claim['id']}"):
+                    # 3. Update the claim row status inside Supabase to 'Given'
+                    supabase_local.table("claims").update({"status": "Given"}).eq("id", claim['id']).execute()
+                    st.success("Claim updated successfully!")
+                    st.rerun()
+
+except Exception as e:
+    st.error(f"Database connection trace error: {e}")
