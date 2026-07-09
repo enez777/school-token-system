@@ -177,7 +177,7 @@ elif st.session_state.role == "teacher":
             from supabase import create_client
 
             # 2. Your working database credentials
-            url = "https://supabase.co"
+            url = "https://iyajpmuprtpsulwkwpvt.supabase.co/rest/v1/"
             key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
             supabase_local = create_client(url, key)
 
