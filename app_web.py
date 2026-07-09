@@ -193,7 +193,8 @@ elif st.session_state.role == "teacher":
                     for claim in open_claims:
                         # Clean up the timestamp layout format
                         raw_time = str(claim.get("created_at", ""))
-                        clean_time = raw_time.split(".").replace("T", " ") if "T" in raw_time else raw_time
+                        clean_time = raw_time.split(".")[0].replace("T", " ") if "T" in raw_time else raw_time
+
 
                         # 4. Your working 4-column alignment layout
                         col1, col2, col3, col4 = st.columns(spec=4)
