@@ -165,50 +165,49 @@ elif st.session_state.role == "teacher":
                 for sid, info in data.get("students", {}).items():
                     st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
 
-       
-        with tab4:
-            st.subheader("📋 Pending Student Reward Claims")
-            
-            import pandas as pd
-            from supabase import create_client
-            
-            # 1. Your working database credentials
-            url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
-            key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
-            supabase_local = create_client(url, key)
-            
-# 1. Use an auto-refresh helper to quietly update the page every 5 seconds
-from streamlit_autorefresh import st_autorefresh
-st_autorefresh(interval=5000, key="claims_auto_sync")
+       with tab4:
+    st.subheader("📝 Pending Student Reward Claims")
 
-try:
-    # 2. Fetch pending claims using the correct local connection variable
-    query = supabase_local.table("claims").select("*")
-    response = query.eq("status", "open").order("created_at").execute()
-    open_claims = response.data
+    import pandas as pd
+    from supabase import create_client
 
-    if not open_claims:
-        st.info("There are currently no pending claims. Great job!")
-    else:
-        for claim in open_claims:
-            # Clean up the timestamp format
-            raw_time = str(claim.get("created_at", ""))
-            clean_time = raw_time.split(".").replace("T", " ") if "T" in raw_time else raw_time
+    # # 1. Your working database credentials
+    url = "https://supabase.co"
+    key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
+    supabase_local = create_client(url, key)
 
-            col1, col2, col3, col4 = st.columns(spec=4)
+    # 2. Use an auto-refresh helper to quietly update the page every 5 seconds
+    from streamlit_autorefresh import st_autorefresh
+    st_autorefresh(interval=5000, key="claims_auto_sync")
 
-            with col1:
-                st.write(f"👤 **{claim['student_name']}**")
-            with col2:
-                st.write(f"🎟️ {claim['reward_name']}")
-            with col3:
-                st.write(f"📅 {clean_time}")
-            with col4:
-                if st.button("Given ✔️", key=f"claim_{claim['id']}"):
-                    # 3. Update the claim row status inside Supabase to 'Given'
-                    supabase_local.table("claims").update({"status": "Given"}).eq("id", claim['id']).execute()
-                    st.success("Claim updated successfully!")
-                    st.rerun()
+    try:
+        # 3. Fetch pending claims using the correct local connection variable
+        query = supabase_local.table("claims").select("*")
+        response = query.eq("status", "open").order("created_at").execute()
+        open_claims = response.data
 
-except Exception as e:
-    st.error(f"Database connection trace error: {e}")
+        if not open_claims:
+            st.info("There are currently no pending claims. Great job!")
+        else:
+            for claim in open_claims:
+                # Clean up the timestamp format
+                raw_time = str(claim.get("created_at", ""))
+                clean_time = raw_time.split(".").replace("T", " ") if "T" in raw_time else raw_time
+
+                col1, col2, col3, col4 = st.columns(spec=4)
+
+                with col1:
+                    st.write(f"👤 **{claim['student_name']}**")
+                with col2:
+                    st.write(f"🎟️ {claim['reward_name']}")
+                with col3:
+                    st.write(f"📅 {clean_time}")
+                with col4:
+                    if st.button("Given ✔️", key=f"claim_{claim['id']}"):
+                        # 4. Update the claim row status inside Supabase to 'Given'
+                        supabase_local.table("claims").update({"status": "Given"}).eq("id", claim['id']).execute()
+                        st.success("Claim updated successfully!")
+                        st.rerun()
+
+    except Exception as e:
+        st.error(f"Database connection trace error: {e}")
