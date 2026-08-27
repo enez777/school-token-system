@@ -48,7 +48,7 @@ if "success_message" in st.session_state and st.session_state.success_message:
 from supabase import create_client
 
 # 1. DEFINE SUPABASE — Replace the placeholder strings below with your actual project URL and public anon key string
-supabase = create_client("iyajpmuprtpsulwkwpvt", "https://iyajpmuprtpsulwkwpvt.supabase.co")
+supabase = create_client("iyajpmuprtpsulwkwpvt", "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH")
 
 # 2. INITIALIZE SESSION STATE MEMORY KEYS
 if "logged_in" not in st.session_state:
