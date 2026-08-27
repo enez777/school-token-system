@@ -48,13 +48,12 @@ if "success_message" in st.session_state and st.session_state.success_message:
 import streamlit as st
 from supabase import create_client
 
-# 1. INITIALIZE THE SUPABASE CONNECTION OBJECT
+# 1. INITIALIZE CONNECTION
 supabase = create_client(
     "https://iyajpmuprtpsulwkwpvt.supabase.co", 
     "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
 )
 
-# 2. INITIALIZE SESSION STATE MEMORY KEYS
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
@@ -62,28 +61,32 @@ if "logged_in" not in st.session_state:
     st.session_state.success_message = None
     st.session_state.teacher_subject = "None"
 
-# 3. RENDER THE INTERACTIVE LOGIN WINDOW
 if not st.session_state.logged_in:
     st.subheader("🔒 Please Login")
-    user_input = st.text_input("Username (Student ID or 'Teacher')").strip()
-    password_input = st.text_input("Password (Staff Only)", type="password").strip()
+    user_input = st.text_input("Username").strip()
+    password_input = st.text_input("Password", type="password").strip()
+
+    # --- DEBUGGING VIEW: SHOW WHAT IS ACTUALLY IN THE DATABASE ---
+    try:
+        debug_query = supabase.table("app_users").select("*").execute()
+        st.write("### 🛑 DATABASE DEBUG INSPECTOR:")
+        st.write("This is exactly what Supabase sees in your app_users table right now:")
+        st.json(debug_query.data)
+    except Exception as e:
+        st.error(f"Debug failed to load data: {e}")
+    # -------------------------------------------------------------
 
     if st.button("Login", use_container_width=True):
         data = school_db.load_data()
-        
-        # Strip all whitespace and convert to lower
         clean_username = user_input.strip().lower()
         clean_password = password_input.strip()
         
-        # Fetch ALL user records to search locally (bypasses partial string query issues)
         try:
             teacher_query = supabase.table("app_users").select("*").execute()
             all_teachers = teacher_query.data if teacher_query.data else []
         except Exception as e:
             all_teachers = []
-            st.error(f"Database Connection Error: {e}")
 
-        # Search for a match manually in Python to avoid database syntax errors
         found_teacher = None
         for teacher in all_teachers:
             db_username = str(teacher.get("username", "")).strip().lower()
@@ -91,15 +94,12 @@ if not st.session_state.logged_in:
                 found_teacher = teacher
                 break
 
-        # 4. VERIFY TEACHER ACCOUNTS
         if found_teacher and str(found_teacher.get("password", "")).strip() == clean_password:
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
             st.session_state.student_id = found_teacher["username"]
             st.session_state.teacher_subject = found_teacher.get("subject", "None")
             st.rerun()
-            
-        # 5. FALLBACK TO LOCAL STUDENT DATA FILE
         elif user_input.upper() in data.get("students", {}):
             st.session_state.logged_in = True
             st.session_state.role = "student"
