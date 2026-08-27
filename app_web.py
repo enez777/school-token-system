@@ -45,7 +45,12 @@ if "success_message" in st.session_state and st.session_state.success_message:
     st.session_state.success_message = None
 
 # --- LOGIN REGION ---
-# 1. INITIALIZE SESSION STATE MEMORY KEYS
+from supabase import create_client
+
+# 1. DEFINE SUPABASE — Replace the placeholder strings below with your actual project URL and public anon key string
+supabase = create_client("iyajpmuprtpsulwkwpvt", "https://iyajpmuprtpsulwkwpvt.supabase.co")
+
+# 2. INITIALIZE SESSION STATE MEMORY KEYS
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
@@ -53,7 +58,7 @@ if "logged_in" not in st.session_state:
     st.session_state.success_message = None
     st.session_state.teacher_subject = "None"
 
-# 2. RENDER THE INTERACTIVE LOGIN WINDOW
+# 3. RENDER THE INTERACTIVE LOGIN WINDOW
 if not st.session_state.logged_in:
     st.subheader("🔒 Please Login")
     user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
@@ -66,16 +71,16 @@ if not st.session_state.logged_in:
         clean_username = user_input.strip().lower()
         
         try:
-            # Query your manual user database records using your globally defined supabase client
+            # Query your manual user database records using your defined connection
             teacher_query = supabase.table("app_users").select("*").eq("username", clean_username).execute()
             teacher_records = teacher_query.data
         except Exception as e:
             teacher_records = []
             st.error(f"Database Connection Error: {e}")
 
-        # 3. VERIFY TEACHER ACCOUNTS FROM THE SUPABASE TABLE
+        # 4. VERIFY TEACHER ACCOUNTS FROM THE SUPABASE TABLE
         if teacher_records and teacher_records[0].get("password") == password_input:
-            teacher_data = teacher_records[0] # Grab the dictionary out of the list response
+            teacher_data = teacher_records[0] # Grab the dictionary out of the list response array
             
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
@@ -83,7 +88,7 @@ if not st.session_state.logged_in:
             st.session_state.teacher_subject = teacher_data.get("subject", "None")
             st.rerun()
             
-        # 4. FALLBACK TO LOCAL STUDENT DATA FILE
+        # 5. FALLBACK TO LOCAL STUDENT DATA FILE
         elif user_input in data.get("students", {}):
             st.session_state.logged_in = True
             st.session_state.role = "student"
@@ -91,6 +96,7 @@ if not st.session_state.logged_in:
             st.rerun()
         else:
             st.error("❌ Invalid Login Credentials.")
+
 
 
 # --- APPLICATION DASHBOARD ---
