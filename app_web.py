@@ -118,14 +118,15 @@ if st.session_state.role == "student":
                 st.error(message)
         st.write("---")
         st.subheader("🎒 Earn Extra Tokens: Classroom Quests")
-        st.info("💡 How it works: Request a task below. Once your teacher approves it and you finish the job, your tokens will be added automatically!")
+        st.info("💡 How it works: Request a task below. Once your teacher approves it and you finish the job, go to the teacher and she/he wil give the amount of points based on the task !")
 
         # 1. Define available tasks, token values, and descriptions
         available_tasks = [
             {"name": "🧹 Classroom Clean-up", "points": 15, "desc": "Sweep the classroom floor, organize desks, and clean the whiteboards."},
             {"name": "🧮 Math Equation Assistant", "points": 20, "desc": "Help the teacher explain or set up a mathematical solution on the board."},
-            {"name": "📚 Library Organizer", "points": 10, "desc": "Neatly return reading materials and books back to their storage shelves."},
-            {"name": "🗑️ Recycling & Waste Duty", "points": 10, "desc": "Empty the classroom paper recycling bin into the hallway container."}
+            {"name": "📚 young helper", "points": 10, "desc": "help teachers set up their class  before your class starts ."},
+            {"name": "🗑️ Recycling & Waste Duty", "points": 10, "desc": "Empty the classroom paper recycling bin into the hallway container."},
+            {"name": "strong delivery man","points":20, "desc": " help deliver heavy items like boxes,chairs and tables and maybe more ."}
         ]
 
         # 2. Render each task in a clean grid card layout container
