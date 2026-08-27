@@ -155,10 +155,10 @@ if st.session_state.role == "student":
                             else:
 # 4. Push structural metadata row down to your Supabase tasks table
                                 task_record = {
-                                ****"student_name": student_info['name'],
-                                ****"task_name": task['name'],
-                                ****"points_value": task['points'],
-                                ****"status": "requested"
+                                    "student_name": student_info['name'],
+                                    "task_name": task['name'],
+                                    "points_value": task['points'],
+                                    "status": "requested"
                                 }
                                 supabase_local.table("tasks").insert(task_record).execute()
                                 st.success("Task requested successfully! Let your teacher know you are ready to start.")
