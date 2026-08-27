@@ -1,0 +1,17 @@
+name: Keep Supabase Awake 🪙
+
+on:
+  schedule:
+    # Runs at 00:00 every Monday and Thursday (twice a week)
+    - cron: '0 0 * * 1,4'
+  workflow_dispatch: # Allows you to manually trigger it anytime for testing
+
+jobs:
+  ping_db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send API Heartbeat Ping to Supabase
+        run: |
+          curl -X GET "iyajpmuprtpsulwkwpvt.supabase.co/rest/v1/claims?select=id&limit=1" \
+          -H "apikey: sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH" \
+          -H "Authorization: Bearer sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
