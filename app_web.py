@@ -175,7 +175,7 @@ if st.session_state.role == "student":
 elif st.session_state.role == "teacher":
         st.header("👨‍🏫 student Management Dashboard")
         
-        tab1, tab2, tab3, tab4 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims"])
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims"])
         
         with tab1:
             st.subheader("➕ Award Tokens")
@@ -268,3 +268,55 @@ elif st.session_state.role == "teacher":
 
             except Exception as e:
                 st.error(f"Database connection trace error: {e}")
+
+            with tab5:
+                st.subheader("📋 Student Activity & Task Verification Logs")
+                
+                # 1. Quietly refresh this panel every 5 seconds to listen for new student requests
+                from streamlit_autorefresh import st_autorefresh
+                st_autorefresh(interval=5000, key="live_teacher_tasks_sync")
+    
+                try:
+                    # 2. Fetch active requested student tasks from Supabase
+                    from supabase import create_client
+                    url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+                    key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
+                    supabase_local = create_client(url, key)
+    
+                    task_query = supabase_local.table("tasks").select("*").eq("status", "requested").order("created_at").execute()
+                    pending_tasks = task_query.data
+    
+                    if not pending_tasks:
+                        st.info("There are currently no active classroom service requests pending.")
+                    else:
+                        st.write("### Active Classroom Service Requests")
+                        for requested_job in pending_tasks:
+                            with st.container(border=True):
+                                t_col1, t_col2, t_col3 = st.columns(spec=3)
+                                
+                                with t_col1:
+                                    st.markdown(f"👤 **{requested_job['student_name']}** wants to do:")
+                                    st.markdown(f"### {requested_job['task_name']}")
+                                with t_col2:
+                                    st.markdown(f"🪙 **Value:** `{requested_job['points_value']} Tokens`")
+                                with t_col3:
+                                    # 3. Secure Verification Trigger Action Button
+                                    approve_key = f"approve_task_{requested_job['id']}"
+                                    if st.button("Job Finished ✔️", key=approve_key, use_container_width=True):
+                                        
+                                        # A. Update the task status block inside Supabase to 'approved'
+                                        supabase_local.table("tasks").update({"status": "approved"}).eq("id", requested_job['id']).execute()
+                                        
+                                        # B. Fetch current student wallet profile row to add their points
+                                        profile_query = supabase_local.table("profiles").select("tokens").eq("username", requested_job['student_name']).single().execute()
+                                        current_tokens = profile_query.data.get("tokens", 0)
+                                        new_token_total = current_tokens + requested_job['points_value']
+                                        
+                                        # C. Push the updated token balance directly into their student wallet
+                                        supabase_local.table("profiles").update({"tokens": new_token_total}).eq("username", requested_job['student_name']).execute()
+                                        
+                                        st.success(f"Task verified! `{requested_job['points_value']}` tokens credited to {requested_job['student_name']}.")
+                                        st.rerun()
+                                        
+                except Exception as e:
+                    st.error(f"Database connection trace error: {e}")
