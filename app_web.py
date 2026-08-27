@@ -49,7 +49,6 @@ import streamlit as st
 from supabase import create_client
 
 # 1. INITIALIZE THE SUPABASE CONNECTION OBJECT
-# This uses your specific project URL and public authorization token
 supabase = create_client(
     "https://iyajpmuprtpsulwkwpvt.supabase.co", 
     "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
@@ -66,38 +65,45 @@ if "logged_in" not in st.session_state:
 # 3. RENDER THE INTERACTIVE LOGIN WINDOW
 if not st.session_state.logged_in:
     st.subheader("🔒 Please Login")
-    user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
+    user_input = st.text_input("Username (Student ID or 'Teacher')").strip()
     password_input = st.text_input("Password (Staff Only)", type="password").strip()
 
     if st.button("Login", use_container_width=True):
         data = school_db.load_data()
         
-        # Convert forced UPPERCASE text box input back to lowercase for database lookup
+        # Strip all whitespace and convert to lower
         clean_username = user_input.strip().lower()
+        clean_password = password_input.strip()
         
+        # Fetch ALL user records to search locally (bypasses partial string query issues)
         try:
-            # Query your manual user database records
-            teacher_query = supabase.table("app_users").select("*").eq("username", clean_username).execute()
-            teacher_records = teacher_query.data
+            teacher_query = supabase.table("app_users").select("*").execute()
+            all_teachers = teacher_query.data if teacher_query.data else []
         except Exception as e:
-            teacher_records = []
+            all_teachers = []
             st.error(f"Database Connection Error: {e}")
 
-        # 4. VERIFY TEACHER ACCOUNTS FROM THE SUPABASE TABLE LIST ARRAY
-        if teacher_records and teacher_records[0].get("password") == password_input:
-            teacher_data = teacher_records[0] # Safely extract row index 0 out of the response list wrapper
-            
+        # Search for a match manually in Python to avoid database syntax errors
+        found_teacher = None
+        for teacher in all_teachers:
+            db_username = str(teacher.get("username", "")).strip().lower()
+            if db_username == clean_username:
+                found_teacher = teacher
+                break
+
+        # 4. VERIFY TEACHER ACCOUNTS
+        if found_teacher and str(found_teacher.get("password", "")).strip() == clean_password:
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
-            st.session_state.student_id = teacher_data["username"]
-            st.session_state.teacher_subject = teacher_data.get("subject", "None")
+            st.session_state.student_id = found_teacher["username"]
+            st.session_state.teacher_subject = found_teacher.get("subject", "None")
             st.rerun()
             
         # 5. FALLBACK TO LOCAL STUDENT DATA FILE
-        elif user_input in data.get("students", {}):
+        elif user_input.upper() in data.get("students", {}):
             st.session_state.logged_in = True
             st.session_state.role = "student"
-            st.session_state.student_id = user_input
+            st.session_state.student_id = user_input.upper()
             st.rerun()
         else:
             st.error("❌ Invalid Login Credentials.")
