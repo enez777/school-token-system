@@ -143,7 +143,7 @@ if st.session_state.role == "student":
                     if st.button("Request Task 📝", key=button_key, use_container_width=True):
                         try:
                             from supabase import create_client
-                            url = "https://supabase.co"
+                            url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
                             key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
                             supabase_local = create_client(url, key)
 
