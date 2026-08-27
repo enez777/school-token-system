@@ -280,7 +280,7 @@ elif st.session_state.role == "teacher":
                     # 2. Fetch active requested student tasks from Supabase
                     from supabase import create_client
                     url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
-                    key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
+                    key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
                     supabase_local = create_client(url, key)
     
                     task_query = supabase_local.table("tasks").select("*").eq("status", "requested").order("created_at").execute()
