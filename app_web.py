@@ -66,47 +66,45 @@ if not st.session_state.logged_in:
     user_input = st.text_input("Username").strip()
     password_input = st.text_input("Password", type="password").strip()
 
-    # --- DEBUGGING VIEW: SHOW WHAT IS ACTUALLY IN THE DATABASE ---
-    try:
-        debug_query = supabase.table("app_users").select("*").execute()
-        st.write("### 🛑 DATABASE DEBUG INSPECTOR:")
-        st.write("This is exactly what Supabase sees in your app_users table right now:")
-        st.json(debug_query.data)
-    except Exception as e:
-        st.error(f"Debug failed to load data: {e}")
-    # -------------------------------------------------------------
+if st.button("Login", use_container_width=True):
+# Standardize input to lowercase for safer matching
+clean_username = user_input.strip().lower()
+clean_password = password_input.strip()
 
-    if st.button("Login", use_container_width=True):
-        data = school_db.load_data()
-        clean_username = user_input.strip().lower()
-        clean_password = password_input.strip()
-        
-        try:
-            teacher_query = supabase.table("app_users").select("*").execute()
-            all_teachers = teacher_query.data if teacher_query.data else []
-        except Exception as e:
-            all_teachers = []
+try:
+    # Fetching records from your Supabase table
+    teacher_query = supabase.table("app_users").select("*").execute()
+    all_teachers = teacher_query.data if teacher_query.data else []
+except Exception as e:
+    st.error(f"Database Query Failed: {e}")
+    all_teachers = []
 
-        found_teacher = None
-        for teacher in all_teachers:
-            db_username = str(teacher.get("username", "")).strip().lower()
-            if db_username == clean_username:
-                found_teacher = teacher
-                break
+found_teacher = None
+for teacher in all_teachers:
+    # Crucial step: Ensure both DB values and inputs are completely lowercase
+    db_username = str(teacher.get("username", "")).strip().lower()
+    if db_username == clean_username:
+        found_teacher = teacher
+        break
 
-        if found_teacher and str(found_teacher.get("password", "")).strip() == clean_password:
-            st.session_state.logged_in = True
-            st.session_state.role = "teacher"
-            st.session_state.student_id = found_teacher["username"]
-            st.session_state.teacher_subject = found_teacher.get("subject", "None")
-            st.rerun()
-        elif user_input.upper() in data.get("students", {}):
-            st.session_state.logged_in = True
-            st.session_state.role = "student"
-            st.session_state.student_id = user_input.upper()
-            st.rerun()
-        else:
-            st.error("❌ Invalid Login Credentials.")
+# --- VALIDATION TREE ---
+if found_teacher:
+    # Ensure password strings match without case or spacing variations
+    db_password = str(found_teacher.get("password", "")).strip()
+    
+    if db_password == clean_password:
+        st.session_state.logged_in = True
+        st.session_state.role = "teacher"
+        # Keep original dictionary key assignment safely
+        st.session_state.student_id = found_teacher.get("username", "") 
+        st.session_state.teacher_subject = found_teacher.get("subject", "None")
+        st.rerun()
+    else:
+        st.error("❌ Incorrect password for this teacher account.")
+else:
+    # If no user matches, show the fallback error
+    st.error("❌ Username not found in the 'app_users' database.")
+
 
 
 
