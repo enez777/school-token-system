@@ -175,7 +175,7 @@ if st.session_state.role == "student":
 elif st.session_state.role == "teacher":
         st.header("👨‍🏫 student Management Dashboard")
         
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims"])
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims", "activity requests"])
         
         with tab1:
             st.subheader("➕ Award Tokens")
