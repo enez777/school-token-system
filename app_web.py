@@ -45,6 +45,7 @@ if "success_message" in st.session_state and st.session_state.success_message:
     st.session_state.success_message = None
 
 # --- LOGIN REGION ---
+# 1. INITIALIZE SESSION STATE MEMORY KEYS
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
@@ -52,6 +53,7 @@ if "logged_in" not in st.session_state:
     st.session_state.success_message = None
     st.session_state.teacher_subject = "None"
 
+# 2. RENDER THE INTERACTIVE LOGIN WINDOW
 if not st.session_state.logged_in:
     st.subheader("🔒 Please Login")
     user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
@@ -60,20 +62,20 @@ if not st.session_state.logged_in:
     if st.button("Login", use_container_width=True):
         data = school_db.load_data()
         
-        # Convert forced UPPERCASE input back to lowercase for the database query
+        # Convert forced UPPERCASE text box input back to lowercase for database lookup
         clean_username = user_input.strip().lower()
         
         try:
-            # Look up the lowercase username in your manual Supabase table
+            # Query your manual user database records using your globally defined supabase client
             teacher_query = supabase.table("app_users").select("*").eq("username", clean_username).execute()
             teacher_records = teacher_query.data
         except Exception as e:
             teacher_records = []
             st.error(f"Database Connection Error: {e}")
 
-        # 1. CHECK THE TEACHER TABLE FIRST (Making sure we check the first item in the list)
+        # 3. VERIFY TEACHER ACCOUNTS FROM THE SUPABASE TABLE
         if teacher_records and teacher_records[0].get("password") == password_input:
-            teacher_data = teacher_records[0] # Grab the specific teacher row dictionary
+            teacher_data = teacher_records[0] # Grab the dictionary out of the list response
             
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
@@ -81,7 +83,7 @@ if not st.session_state.logged_in:
             st.session_state.teacher_subject = teacher_data.get("subject", "None")
             st.rerun()
             
-        # 2. FALLBACK TO YOUR CLASSIC STUDENT DICTIONARY SYSTEM
+        # 4. FALLBACK TO LOCAL STUDENT DATA FILE
         elif user_input in data.get("students", {}):
             st.session_state.logged_in = True
             st.session_state.role = "student"
