@@ -144,7 +144,7 @@ if st.session_state.role == "student":
                         try:
                             from supabase import create_client
                             url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
-                            key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
+                            key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
                             supabase_local = create_client(url, key)
 
 # 3. Check for existing active requests to prevent student spam
