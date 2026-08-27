@@ -45,10 +45,15 @@ if "success_message" in st.session_state and st.session_state.success_message:
     st.session_state.success_message = None
 
 # --- LOGIN REGION ---
+import streamlit as st
 from supabase import create_client
 
-# 1. DEFINE SUPABASE — Replace the placeholder strings below with your actual project URL and public anon key string
-supabase = create_client("https://iyajpmuprtpsulwkwpvt.supabase.co", "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH")
+# 1. INITIALIZE THE SUPABASE CONNECTION OBJECT
+# This uses your specific project URL and public authorization token
+supabase = create_client(
+    "https://iyajpmuprtpsulwkwpvt.supabase.co", 
+    "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+)
 
 # 2. INITIALIZE SESSION STATE MEMORY KEYS
 if "logged_in" not in st.session_state:
@@ -71,16 +76,16 @@ if not st.session_state.logged_in:
         clean_username = user_input.strip().lower()
         
         try:
-            # Query your manual user database records using your defined connection
+            # Query your manual user database records
             teacher_query = supabase.table("app_users").select("*").eq("username", clean_username).execute()
             teacher_records = teacher_query.data
         except Exception as e:
             teacher_records = []
             st.error(f"Database Connection Error: {e}")
 
-        # 4. VERIFY TEACHER ACCOUNTS FROM THE SUPABASE TABLE
+        # 4. VERIFY TEACHER ACCOUNTS FROM THE SUPABASE TABLE LIST ARRAY
         if teacher_records and teacher_records[0].get("password") == password_input:
-            teacher_data = teacher_records[0] # Grab the dictionary out of the list response array
+            teacher_data = teacher_records[0] # Safely extract row index 0 out of the response list wrapper
             
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
@@ -96,6 +101,7 @@ if not st.session_state.logged_in:
             st.rerun()
         else:
             st.error("❌ Invalid Login Credentials.")
+
 
 
 
