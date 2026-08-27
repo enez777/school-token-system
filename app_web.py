@@ -117,6 +117,58 @@ if st.session_state.role == "student":
             else:
                 st.error(message)
 
+            st.write("---")
+            st.subheader("🎒 Earn Extra Tokens: Classroom Quests")
+            st.info("💡 How it works: Request a task below. Once your teacher approves it and you finish the job, your tokens will be added automatically!")
+
+    # 1. Define available tasks, token values, and descriptions
+    available_tasks = [
+        {"name": "🧹 Classroom Clean-up", "points": 15, "desc": "Sweep the classroom floor, organize desks, and clean the whiteboards."},
+        {"name": "🧮 Math Equation Assistant", "points": 20, "desc": "Help the teacher explain or set up a mathematical solution on the board."},
+        {"name": "📚 Library Organizer", "points": 10, "desc": "Neatly return reading materials and books back to their storage shelves."},
+        {"name": "🗑️ Recycling & Waste Duty", "points": 10, "desc": "Empty the classroom paper recycling bin into the hallway container."}
+    ]
+
+    # 2. Render each task in a clean grid card layout container
+    for task in available_tasks:
+        with st.container(border=True):
+            col1, col2 = st.columns(spec=2)
+            with col1:
+                st.markdown(f"### {task['name']}")
+                st.write(task['desc'])
+                st.markdown(f"🪙 **Payout:** `{task['points']} Tokens`")
+            with col2:
+                # Dynamic string formatting ensures unique widget key profiles
+                button_key = f"req_{task['name'].lower().replace(' ', '_')}"
+                
+                if st.button("Request Task 📝", key=button_key, use_container_width=True):
+                    try:
+                        from supabase import create_client
+                        url = "https://supabase.co"
+                        key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkpZfNH"
+                        supabase_local = create_client(url, key)
+
+                        # 3. Check for existing active requests to prevent student spam
+                        check_query = supabase_local.table("tasks").select("*").eq("student_name", student_info['name']).eq("task_name", task['name']).eq("status", "requested").execute()
+                        
+                        if check_query.data:
+                            st.warning("You already have an active pending request out for this task!")
+                        else:
+                            # 4. Push structural metadata row down to your Supabase tasks table
+                            task_record = {
+                                "student_name": student_info['name'],
+                                "task_name": task['name'],
+                                "points_value": task['points'],
+                                "status": "requested"
+                            }
+                            supabase_local.table("tasks").insert(task_record).execute()
+                            st.success("Task requested successfully! Let your teacher know you are ready to start.")
+                            st.rerun()
+                            
+                    except Exception as e:
+                        st.error(f"Task portal registry synchronization failure: {e}")
+
+
     # --- TEACHER VIEW ---
 elif st.session_state.role == "teacher":
         st.header("👨‍🏫 student Management Dashboard")
