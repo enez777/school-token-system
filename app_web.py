@@ -45,69 +45,31 @@ if "success_message" in st.session_state and st.session_state.success_message:
     st.session_state.success_message = None
 
 # --- LOGIN REGION ---
-import streamlit as st
-from supabase import create_client
-
-# 1. INITIALIZE CONNECTION
-supabase = create_client(
-    "https://iyajpmuprtpsulwkwpvt.supabase.co", 
-    "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
-)
-
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
     st.session_state.student_id = ""
     st.session_state.success_message = None
-    st.session_state.teacher_subject = "None"
 
 if not st.session_state.logged_in:
-    st.subheader("🔒 Please Login")
-    user_input = st.text_input("Username").strip()
-    password_input = st.text_input("Password", type="password").strip()
-
-if st.button("Login", use_container_width=True):
-# Standardize input to lowercase for safer matching
-clean_username = user_input.strip().lower()
-clean_password = password_input.strip()
-
-try:
-    # Fetching records from your Supabase table
-    teacher_query = supabase.table("app_users").select("*").execute()
-    all_teachers = teacher_query.data if teacher_query.data else []
-except Exception as e:
-    st.error(f"Database Query Failed: {e}")
-    all_teachers = []
-
-found_teacher = None
-for teacher in all_teachers:
-    # Crucial step: Ensure both DB values and inputs are completely lowercase
-    db_username = str(teacher.get("username", "")).strip().lower()
-    if db_username == clean_username:
-        found_teacher = teacher
-        break
-
-# --- VALIDATION TREE ---
-if found_teacher:
-    # Ensure password strings match without case or spacing variations
-    db_password = str(found_teacher.get("password", "")).strip()
+    st.subheader("🔐 Please Login")
+    user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
+    password_input = st.text_input("Password (Staff Only)", type="password").strip()
     
-    if db_password == clean_password:
-        st.session_state.logged_in = True
-        st.session_state.role = "teacher"
-        # Keep original dictionary key assignment safely
-        st.session_state.student_id = found_teacher.get("username", "") 
-        st.session_state.teacher_subject = found_teacher.get("subject", "None")
-        st.rerun()
-    else:
-        st.error("❌ Incorrect password for this teacher account.")
-else:
-    # If no user matches, show the fallback error
-    st.error("❌ Username not found in the 'app_users' database.")
-
-
-
-
+    if st.button("Login", use_container_width=True):
+        data = school_db.load_data()
+        
+        if user_input == "TEACHER" and password_input == "hetcollegevos2027?":
+            st.session_state.logged_in = True
+            st.session_state.role = "teacher"
+            st.rerun()
+        elif user_input in data.get("students", {}):
+            st.session_state.logged_in = True
+            st.session_state.role = "student"
+            st.session_state.student_id = user_input
+            st.rerun()
+        else:
+            st.error("❌ Invalid Login Credentials.")
 
 # --- APPLICATION DASHBOARD ---
 else:
