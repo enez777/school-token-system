@@ -50,19 +50,38 @@ if "logged_in" not in st.session_state:
     st.session_state.role = None
     st.session_state.student_id = ""
     st.session_state.success_message = None
+    st.session_state.teacher_subject = "None"
 
 if not st.session_state.logged_in:
-    st.subheader("🔐 Please Login")
+    st.subheader("🔒 Please Login")
     user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
     password_input = st.text_input("Password (Staff Only)", type="password").strip()
-    
+
     if st.button("Login", use_container_width=True):
         data = school_db.load_data()
         
-        if user_input == "TEACHER" and password_input == "hetcollegevos2027?":
+        # Convert forced UPPERCASE input back to lowercase for the database query
+        clean_username = user_input.strip().lower()
+        
+        try:
+            # Look up the lowercase username in your manual Supabase table
+            teacher_query = supabase.table("app_users").select("*").eq("username", clean_username).execute()
+            teacher_records = teacher_query.data
+        except Exception as e:
+            teacher_records = []
+            st.error(f"Database Connection Error: {e}")
+
+        # 1. CHECK THE TEACHER TABLE FIRST (Making sure we check the first item in the list)
+        if teacher_records and teacher_records[0].get("password") == password_input:
+            teacher_data = teacher_records[0] # Grab the specific teacher row dictionary
+            
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
+            st.session_state.student_id = teacher_data["username"]
+            st.session_state.teacher_subject = teacher_data.get("subject", "None")
             st.rerun()
+            
+        # 2. FALLBACK TO YOUR CLASSIC STUDENT DICTIONARY SYSTEM
         elif user_input in data.get("students", {}):
             st.session_state.logged_in = True
             st.session_state.role = "student"
@@ -70,6 +89,7 @@ if not st.session_state.logged_in:
             st.rerun()
         else:
             st.error("❌ Invalid Login Credentials.")
+
 
 # --- APPLICATION DASHBOARD ---
 else:
