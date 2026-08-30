@@ -82,10 +82,10 @@ if st.button("Login", use_container_width=True):
 else:
     st.sidebar.write(f"Logged in as: **{st.session_state.role.title()}**")
     if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.role = None
-        st.session_state.student_id = ""
-        st.session_state.success_message = None
+        st.session_state["logged_in'] = False
+        st.session_state["role"] = None
+        st.session_state["student_id"] = ""
+        st.session_state["success_message"] = None
         st.rerun()
 
     data = school_db.load_data()
