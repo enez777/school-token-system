@@ -56,51 +56,37 @@ if not st.session_state.logged_in:
     user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
     password_input = st.text_input("Password (Staff Only)", type="password").strip()
     
-    if st.button("Login", use_container_width=True):
-        teacher_found = False
+        if st.button("Login", use_container_width=True):
+        # 1. Direct local fallback for students first to isolate network steps
+        data = school_db.load_data()
+        students_dict = data.get("students", {})
+        student_keys_upper = {str(k).upper(): k for k in students_dict.keys()}
         
-        # 1. Check your live Supabase 'teachers' table
-        try:
-            from supabase import create_client
-            url = st.secrets["supabase"]["url"]
-            key = st.secrets["supabase"]["key"]
-            supabase_auth = create_client(url, key)
+        if user_input in student_keys_upper:
+            original_student_id = student_keys_upper[user_input]
+            st.session_state.logged_in = True
+            st.session_state.role = "student"
+            st.session_state.student_id = original_student_id
+            st.rerun()
             
-            teacher_query = (
-                supabase_auth.table("teachers")
-                .select("*")
-                .eq("username", user_input)
-                .eq("password", password_input)
-                .execute()
-            )
-            
-            # If a match is found in Supabase, log them in as a teacher
-            if len(teacher_query.data) > 0:
-                st.session_state.logged_in = True
-                st.session_state.role = "teacher"
-                teacher_found = True
-                st.rerun()
+        # 2. If it's not a student, check the live Supabase teachers table
+        else:
+            try:
+                from supabase import create_client
+                url = st.secrets["supabase"]["url"]
+                key = st.secrets["supabase"]["key"]
+                supabase_auth = create_client(url, key)
                 
-                except Exception as e:
-                    st.error(f"⚠️ Hidden Connection Error: {e}")
-                    
-        # 2. Fallback: If no teacher matches, verify local student records
-            
-            if not teacher_found:
-              data = school_db.load_data()
-              students_dict = data.get("students", {})
-              student_keys_upper = {str(k).upper(): k for k in students_dict.keys()}
-            
-            if user_input in student_keys_upper:
-                original_student_id = student_keys_upper[user_input]
-                st.session_state.logged_in = True
-                st.session_state.role = "student"
-                st.session_state.student_id = original_student_id
-                st.rerun()
-            else:
-                st.error("❌ Invalid Login Credentials.")
-
-
+                teacher_query = supabase_auth.table("teachers").select("*").eq("username", user_input).eq("password", password_input).execute()
+                
+                if len(teacher_query.data) > 0:
+                    st.session_state.logged_in = True
+                    st.session_state.role = "teacher"
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid Login Credentials.")
+            except Exception as e:
+                st.error(f"⚠️ Supabase Error: {e}")
 
 # --- APPLICATION DASHBOARD ---
 else:
