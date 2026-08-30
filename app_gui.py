@@ -40,14 +40,29 @@ class SchoolTokenApp(ctk.CTk):
         password = self.pass_input.get().strip()
         
         data = school_db.load_data()
-        
-        # Check Teacher Login
-        if username == "TEACHER":
-            if password == "admin123":
+                # Check Teacher Login (Supabase Desktop GUI Version)
+        try:
+            # Query your live Supabase 'teachers' table using the typed username and password
+            # (Assumes your main app script initialized 'self.supabase')
+            teacher_query = (
+                self.supabase.table("teachers")
+                .select("*")
+                .eq("username", username.strip().upper())
+                .eq("password", password.strip())
+                .execute()
+            )
+            
+            # If a record matches in Supabase, log them in!
+            if len(teacher_query.data) > 0:
                 self.current_user_role = "teacher"
                 self.setup_dashboard()
             else:
-                self.show_error_popup("❌ Incorrect staff password.")
+                # If username matches "TEACHER" but password failed, or user not found at all
+                self.show_error_popup("❌ Incorrect staff username or password.")
+                
+        except Exception as e:
+            self.show_error_popup(f"❌ Database Connection Error: {e}")
+
         
         # Check Student Login
         elif username in data.get("students", {}):
