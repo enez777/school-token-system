@@ -7,6 +7,19 @@ ctk.set_default_color_theme("blue")
 class SchoolTokenApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+                # Live Supabase Database Connector
+        import streamlit as st
+        from supabase import create_client
+        
+        try:
+            url = st.secrets["supabase"]["url"]
+            key = st.secrets["supabase"]["key"]
+            self.supabase = create_client(url, key)
+        except Exception as e:
+            # Fallback print statement in case secrets.toml cannot be resolved locally
+            print(f"Critical Error initializing live database configuration: {e}")
+            self.supabase = None
+
         
         self.title("School Token Portal")
         self.geometry("450x300")  # Start with a small window for login
