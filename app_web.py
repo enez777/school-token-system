@@ -86,9 +86,9 @@ if not st.session_state.logged_in:
         # 2. Fallback: If no teacher matches, verify local student records
             
             if not teacher_found:
-            data = school_db.load_data()
-            students_dict = data.get("students", {})
-            student_keys_upper = {str(k).upper(): k for k in students_dict.keys()}
+              data = school_db.load_data()
+              students_dict = data.get("students", {})
+              student_keys_upper = {str(k).upper(): k for k in students_dict.keys()}
             
             if user_input in student_keys_upper:
                 original_student_id = student_keys_upper[user_input]
