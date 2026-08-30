@@ -81,8 +81,9 @@ if not st.session_state.logged_in:
                 teacher_found = True
                 st.rerun()
                 
-        except Exception as e:
-            st.error(f"Supabase Database Authentication Error: {e}")                    
+                except Exception as e:
+                    st.error(f"⚠️ Hidden Connection Error: {e}")
+                    
         # 2. Fallback: If no teacher matches, verify local student records
             
             if not teacher_found:
