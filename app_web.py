@@ -45,47 +45,37 @@ if "success_message" in st.session_state and st.session_state.success_message:
     st.session_state.success_message = None
 
 # --- LOGIN REGION ---
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.role = None
-    st.session_state.student_id = ""
-    st.session_state.success_message = None
-
-if not st.session_state.logged_in:
-    st.subheader("🔐 Please Login")
-    user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
-    password_input = st.text_input("Password (Staff Only)", type="password").strip()
-    
-      if st.button("Login", use_container_width=True):
+if st.button("Login", use_container_width=True):
     # Alles hieronder heeft exact 4 spaties extra aan de linkerkant
-        data = school_db.load_data()
-        students_dict = data.get("students", {})
-        student_keys_upper = {str(k).upper(): k for k in students_dict.keys()}
+    data = school_db.load_data()
+    students_dict = data.get("students", {})
+    student_keys_upper = {str(k).upper(): k for k in students_dict.keys()}
+    
+    if user_input in student_keys_upper:
+        original_student_id = student_keys_upper[user_input]
+        st.session_state.logged_in = True
+        st.session_state.role = "student"
+        st.session_state.student_id = original_student_id
+        st.rerun()
         
-      if user_input in student_keys_upper:
-          original_student_id = student_keys_upper[user_input]
-          st.session_state.logged_in = True
-          st.session_state.role = "student"
-          st.session_state.student_id = original_student_id
-          st.rerun()
-        
-      else:
-          try:
-              from supabase import create_client
-              url = st.secrets["supabase"]["url"]
-              key = st.secrets["supabase"]["key"]
-              supabase_auth = create_client(url, key)
+    else:
+        try:
+            from supabase import create_client
+            url = st.secrets["supabase"]["url"]
+            key = st.secrets["supabase"]["key"]
+            supabase_auth = create_client(url, key)
             
-              teacher_query = supabase_auth.table("teachers").select("*").eq("username", user_input).eq("password", password_input).execute()
+            teacher_query = supabase_auth.table("teachers").select("*").eq("username", user_input).eq("password", password_input).execute()
             
-              if len(teacher_query.data) > 0:
-                  st.session_state.logged_in = True
-                  st.session_state.role = "teacher"
-                  st.rerun()
-              else:
-                  st.error("❌ Invalid Login Credentials.")
-          except Exception as e:
-              st.error(f"⚠️ Supabase Error: {e}")
+            if len(teacher_query.data) > 0:
+                st.session_state.logged_in = True
+                st.session_state.role = "teacher"
+                st.rerun()
+            else:
+                st.error("❌ Invalid Login Credentials.")
+        except Exception as e:
+            st.error(f"⚠️ Supabase Error: {e}")
+
 
 
 # --- APPLICATION DASHBOARD ---
