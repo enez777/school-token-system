@@ -56,51 +56,20 @@ if not st.session_state.logged_in:
     user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
     password_input = st.text_input("Password (Staff Only)", type="password").strip()
     
-            if st.button("Login", use_container_width=True):
-        teacher_found = False
+    if st.button("Login", use_container_width=True):
+        data = school_db.load_data()
         
-        # 1. Check your live Supabase 'teachers' table
-                try:
-                    # We initialize a localized client connection right inside the button action
-                    from supabase import create_client
-                    url = st.secrets["supabase"]["url"]
-                    key = st.secrets["supabase"]["key"]
-                    supabase_auth = create_client(url, key)
-                    
-                    teacher_query = (
-                        supabase_auth.table("teachers")
-                        .select("*")
-                        .eq("username", user_input)
-                        .eq("password", password_input)
-                        .execute()
-                    )
-                    
-                    # If a match is found in Supabase, log them in as a teacher
-                    if len(teacher_query.data) > 0:
-                        st.session_state.logged_in = True
-                        st.session_state.role = "teacher"
-                        teacher_found = True
-                        st.rerun()
-                        
-                except Exception as e:
-                    st.error(f"Supabase Database Authentication Error: {e}")                    
-                # 2. Fallback: If no teacher matches, verify local student records
-                    
-                    if not teacher_found:
-                    data = school_db.load_data()
-                    students_dict = data.get("students", {})
-                    student_keys_upper = {str(k).upper(): k for k in students_dict.keys()}
-                    
-                    if user_input in student_keys_upper:
-                        original_student_id = student_keys_upper[user_input]
-                        st.session_state.logged_in = True
-                        st.session_state.role = "student"
-                        st.session_state.student_id = original_student_id
-                        st.rerun()
-                    else:
-                        st.error("❌ Invalid Login Credentials.")
-
-
+        if user_input == "TEACHER" and password_input == "password":
+            st.session_state.logged_in = True
+            st.session_state.role = "teacher"
+            st.rerun()
+        elif user_input in data.get("students", {}):
+            st.session_state.logged_in = True
+            st.session_state.role = "student"
+            st.session_state.student_id = user_input
+            st.rerun()
+        else:
+            st.error("❌ Invalid Login Credentials.")
 
 # --- APPLICATION DASHBOARD ---
 else:
@@ -129,7 +98,10 @@ if st.session_state.role == "student":
         if st.button("Redeem Reward", type="primary", use_container_width=True):
             success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
             if success:
-                
+                from supabase import create_client
+                url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+                key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+                supabase = create_client(url, key)
                 # 🟢 Logs the transaction automatically inside your Supabase claims table
                 try:
                     supabase.table("claims").insert({
@@ -172,9 +144,8 @@ if st.session_state.role == "student":
                     if st.button("Request Task 📝", key=button_key, use_container_width=True):
                         try:
                             from supabase import create_client
-                            url = st.secrets["supabase"]["url"]
-                            key = st.secrets["supabase"]["key"]
-
+                            url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+                            key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
                             supabase_local = create_client(url, key)
 
 # 3. Check for existing active requests to prevent student spam
@@ -260,9 +231,9 @@ elif st.session_state.role == "teacher":
             import pandas as pd
             from supabase import create_client
 
-# Secure credentials pulled directly from your .streamlit/secrets.toml
-            url = st.secrets["supabase"]["url"]
-            key = st.secrets["supabase"]["key"]
+            # 2. Your working database credentials
+            url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+            key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
             supabase_local = create_client(url, key)
 
             try:
