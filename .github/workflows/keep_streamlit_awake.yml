@@ -1,0 +1,21 @@
+name: Keep Streamlit Awake
+
+on:
+  schedule:
+    # Runs every 6 hours to stay well under the inactivity threshold
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows you to trigger it manually for testing
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Push Empty Commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@://github.com"
+          git commit --allow-empty -m "Keepalive: Heartbeat to maintain Streamlit deployment"
+          git push
