@@ -59,7 +59,7 @@ if not st.session_state.logged_in:
     if st.button("Inloggen", use_container_width=True):
         data = school_db.load_data()
         
-        if user_input == "TEACHER" and password_input == "password":
+        if user_input == "DOCENT" and password_input == "password":
             st.session_state.logged_in = True
             st.session_state.role = "teacher"
             st.rerun()
@@ -85,7 +85,7 @@ else:
 
     # --- STUDENT VIEW ---
 if st.session_state.role == "student":
-        st.header("🎒 Studentendashboard")
+        st.header("🎒 leerlingen dashboard")
         student_info = data["students"][st.session_state.student_id]
 
         st.metric(label=f"Welkom terug, {student_info['name']}!", value=f"{student_info['points']} Tokens")
