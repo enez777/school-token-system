@@ -3,7 +3,7 @@ import school_db
 from streamlit.components.v1 import html
 st.set_page_config(initial_sidebar_state="expanded")
 # Configure the web page layout (Moet als allereerste Streamlit commando)
-st.set_page_config(page_title="School Token Portal", page_icon="🏆", layout="centered")
+st.set_page_config(page_title="School Token Portaal", page_icon="🏆", layout="centered")
 
 # Forceer mobiele en desktop toolbar deactivatie
 st.set_option("client.toolbarMode", "viewer")
@@ -36,7 +36,7 @@ global_hide_style = """
 """
 st.markdown(global_hide_style, unsafe_allow_html=True)
 
-st.title("🏆 School Token Portal")
+st.title("🏆 School Token Portaal")
 
 # --- TOAST GEHEUGENSYSTEM ---
 # Als er een succesbericht is opgeslagen na de herlaadactie, laat hem nu rustig zien!
@@ -52,11 +52,11 @@ if "logged_in" not in st.session_state:
     st.session_state.success_message = None
 
 if not st.session_state.logged_in:
-    st.subheader("🔐 Please Login")
-    user_input = st.text_input("Username (Student ID or 'Teacher')").strip().upper()
-    password_input = st.text_input("Password (Staff Only)", type="password").strip()
+    st.subheader("🔐 Inloggen")
+    user_input = st.text_input("Gebruikersnaam (Student-ID of 'Leraar')").strip().upper()
+    password_input = st.text_input("Wachtwoord (Alleen voor personeel)", type="password").strip()
     
-    if st.button("Login", use_container_width=True):
+    if st.button("Inloggen", use_container_width=True):
         data = school_db.load_data()
         
         if user_input == "TEACHER" and password_input == "password":
@@ -69,12 +69,12 @@ if not st.session_state.logged_in:
             st.session_state.student_id = user_input
             st.rerun()
         else:
-            st.error("❌ Invalid Login Credentials.")
+            st.error("❌ Ongeldige inloggegevens.")
 
 # --- APPLICATION DASHBOARD ---
 else:
-    st.sidebar.write(f"Logged in as: **{st.session_state.role.title()}**")
-    if st.sidebar.button("Logout"):
+    st.sidebar.write(f"Ingelogd als: **{st.session_state.role.title()}**")
+    if st.sidebar.button("Uitloggen"):
         st.session_state.logged_in = False
         st.session_state.role = None
         st.session_state.student_id = ""
@@ -85,17 +85,17 @@ else:
 
     # --- STUDENT VIEW ---
 if st.session_state.role == "student":
-        st.header("🎒 Student Dashboard")
+        st.header("🎒 Studentendashboard")
         student_info = data["students"][st.session_state.student_id]
 
-        st.metric(label=f"Welcome back, {student_info['name']}!", value=f"{student_info['points']} Tokens")
+        st.metric(label=f"Welkom terug, {student_info['name']}!", value=f"{student_info['points']} Tokens")
 
         st.write("---")
-        st.subheader("🎁 Redeem Rewards")
+        st.subheader("🎁 Beloningen inwisselen")
         available_rewards = list(data.get("rewards", {}).keys())
-        selected_reward = st.selectbox("Choose your reward:", available_rewards)
+        selected_reward = st.selectbox("Kies je beloning:", available_rewards)
 
-        if st.button("Redeem Reward", type="primary", use_container_width=True):
+        if st.button("Beloning inwisselen", type="primary", use_container_width=True):
             success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
             if success:
                 from supabase import create_client
@@ -110,23 +110,23 @@ if st.session_state.role == "student":
                         "status": "open"
                     }).execute()
                 except Exception as e:
-                    st.warning(f"Tokens subtracted, but teacher database alert failed: {e}")
+                    st.warning(f"Tokens afgetrokken, maar de melding naar de lerarendatabase is mislukt: {e}")
                     
                 st.session_state.success_message = message
                 st.rerun()
             else:
                 st.error(message)
         st.write("---")
-        st.subheader("🎒 Earn Extra Tokens: Classroom Quests")
-        st.info("💡 How it works: Request a task below. Once your teacher approves it and you finish the job, go to the teacher and she/he wil give the amount of points based on the task !")
+        st.subheader("🎒 Extra Tokens verdienen: Klassikale opdrachten")
+        st.info("💡 Zo werkt het: Vraag hieronder een taak aan. Zodra je leraar deze heeft goedgekeurd en je de taak hebt voltooid, ga je naar je leraar. Die geeft je het aantal punten dat bij de taak hoort!")
 
         # 1. Define available tasks, token values, and descriptions
         available_tasks = [
-            {"name": "🧹 Classroom Clean-up", "points": 15, "desc": "Sweep the classroom floor, organize desks, and clean the whiteboards."},
-            {"name": "🧮 Math Equation Assistant", "points": 20, "desc": "Help the teacher explain or set up a mathematical solution on the board."},
-            {"name": "📚 young helper", "points": 10, "desc": "help teachers set up their class  before your class starts ."},
-            {"name": "🗑️ Recycling & Waste Duty", "points": 10, "desc": "Empty the classroom paper recycling bin into the hallway container."},
-            {"name": "strong delivery man","points":20, "desc": " help deliver heavy items like boxes,chairs and tables and maybe more ."}
+            {"name": "🧹 Klaslokaal schoonmaken", "points": 15, "desc": "Veeg de vloer van het klaslokaal, ruim de bureaus op en maak de whiteboards schoon."},
+            {"name": "🧮 Assistent bij wiskunde", "points": 20, "desc": "Help de leraar met het uitleggen of opstellen van een wiskundige oplossing op het bord."},
+            {"name": "📚 Jonge helper", "points": 10, "desc": "Help leraren hun klas klaar te zetten voordat jouw les begint."},
+            {"name": "🗑️ Recycling en afvaldienst", "points": 10, "desc": "Leeg de papierbak van het klaslokaal in de container op de gang."},
+            {"name": "strong delivery man","points":20, "desc": "Help met het bezorgen van zware spullen zoals dozen, stoelen en tafels en misschien nog meer."}
         ]
 
         # 2. Render each task in a clean grid card layout container
@@ -136,12 +136,12 @@ if st.session_state.role == "student":
                 with col1:
                     st.markdown(f"### {task['name']}")
                     st.write(task['desc'])
-                    st.markdown(f"🪙 **Payout:** `{task['points']} Tokens`")
+                    st.markdown(f"🪙 **Beloning:** `{task['points']} Tokens`")
                 with col2:
 # Dynamic string formatting ensures unique widget key profiles
                     button_key = f"req_{task['name'].lower().replace(' ', '_')}"
 
-                    if st.button("Request Task 📝", key=button_key, use_container_width=True):
+                    if st.button("Taak aanvragen 📝", key=button_key, use_container_width=True):
                         try:
                             from supabase import create_client
                             url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
@@ -152,7 +152,7 @@ if st.session_state.role == "student":
                             check_query = supabase_local.table("tasks").select("*").eq("student_name", student_info['name']).eq("task_name", task['name']).eq("status", "requested").execute()
 
                             if check_query.data:
-                                st.warning("You already have an active pending request out for this task!")
+                                st.warning("Je hebt al een actieve aanvraag voor deze taak!")
                             else:
 # 4. Push structural metadata row down to your Supabase tasks table
                                 task_record = {
@@ -162,11 +162,11 @@ if st.session_state.role == "student":
                                     "status": "requested"
                                 }
                                 supabase_local.table("tasks").insert(task_record).execute()
-                                st.success("Task requested successfully! Let your teacher know you are ready to start.")
+                                st.success("Taak succesvol aangevraagd! Laat je leraar weten dat je klaar bent om te beginnen.")
                                 st.rerun()
 
                         except Exception as e:
-                            st.error(f"Task portal registry synchronization failure: {e}")
+                            st.error(f"Synchronisatie van het taakportaal is mislukt: {e}")
 
                 
                     
@@ -174,36 +174,36 @@ if st.session_state.role == "student":
 
     # --- TEACHER VIEW ---
 elif st.session_state.role == "teacher":
-        st.header("👨‍🏫 student Management Dashboard")
+        st.header("👨‍🏫 Dashboard voor studentenbeheer")
         
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Award Points", "Register Student", "Registered Students", "claims", "activity requests"])
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Punten toekennen", "Student registreren", "Geregistreerde studenten", "claims", "activiteitsaanvragen"])
         
         with tab1:
-            st.subheader("➕ Award Tokens")
+            st.subheader("➕ Tokens toekennen")
             student_list = list(data.get("students", {}).keys())
             if not student_list:
-                st.warning("⚠️ No students registered yet. Please go to the Register tab first.")
+                st.warning("⚠️ Er zijn nog geen studenten geregistreerd. Ga eerst naar het tabblad Registreren.")
             else:
-                target_student = st.selectbox("Select Student ID:", student_list)
-                points_to_add = st.number_input("Number of points to grant:", min_value=1, step=1, value=10)
+                target_student = st.selectbox("Selecteer Student-ID:", student_list)
+                points_to_add = st.number_input("Aantal punten om toe te kennen:", min_value=1, step=1, value=10)
                 
-                if st.button("Grant Points", type="primary", use_container_width=True):
+                if st.button("Punten toekennen", type="primary", use_container_width=True):
                     success, new_balance, name = school_db.add_points_to_student(target_student, points_to_add)
                     if success:
                         # We slaan het bericht eerst op en herladen daarna pas!
-                        st.session_state.success_message = f"✅ Granted {points_to_add} points to {name}! New total: {new_balance}"
+                        st.session_state.success_message = f"✅ {points_to_add} punten toegekend aan {name}! Nieuw totaal: {new_balance}"
                         st.rerun()
                     else:
-                        st.error("❌ Transaction failed.")
+                        st.error("❌ Transactie mislukt.")
                         
         with tab2:
-            st.subheader("📝 Register New Student")
-            new_id = st.text_input("Create Student ID (e.g., 12345)").strip().upper()
-            new_name = st.text_input("Enter Student Name").strip()
+            st.subheader("📝 Nieuwe student registreren")
+            new_id = st.text_input("Maak Student-ID aan (bijv. 12345)").strip().upper()
+            new_name = st.text_input("Voer naam van student in").strip()
             
-            if st.button("Register Student", type="primary", use_container_width=True):
+            if st.button("Student registreren", type="primary", use_container_width=True):
                 if not new_id or not new_name:
-                    st.error("❌ Please fill in both fields.")
+                    st.error("❌ Vul beide velden in.")
                 else:
                     success, message = school_db.register_new_student(new_id, new_name)
                     if success:
@@ -213,16 +213,16 @@ elif st.session_state.role == "teacher":
                         st.error(f"❌ {message}")
             
         with tab3:
-            st.subheader("📊 Roster Overview")
+            st.subheader("📊 Overzicht studenten")
             if not data.get("students"):
-                st.write("*No students registered in the database yet.*")
+                st.write("*Er zijn nog geen studenten geregistreerd in de database.*")
             else:
                 for sid, info in data.get("students", {}).items():
-                    st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} pts`")
+                    st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} punten`")
 
 
         with tab4:
-            st.subheader("📝 Pending Student Reward Claims")
+            st.subheader("📝 Openstaande aanvragen voor studentbeloningen")
 
             # 1. Quietly refresh this tab every 5 seconds to look for new student claims
             from streamlit_autorefresh import st_autorefresh
@@ -243,7 +243,7 @@ elif st.session_state.role == "teacher":
                 open_claims = response.data
 
                 if not open_claims:
-                    st.info("There are currently no pending claims. Great job!")
+                    st.info("Er zijn momenteel geen openstaande aanvragen. Goed gedaan!")
                 else:
                     for claim in open_claims:
                         # Clean up the timestamp layout format
@@ -262,16 +262,16 @@ elif st.session_state.role == "teacher":
                             st.write(f"📅 {clean_time}")
                         with col4:
                             # 5. When clicked, this now safely updates Supabase and makes the row disappear
-                            if st.button("Given ✔️", key=f"claim_{claim['id']}"):
+                            if st.button("Gegeven ✔️", key=f"claim_{claim['id']}"):
                                 supabase_local.table("claims").update({"status": "Given"}).eq("id", claim['id']).execute()
-                                st.success("Claim updated successfully!")
+                                st.success("Aanvraag succesvol bijgewerkt!")
                                 st.rerun()
 
             except Exception as e:
-                st.error(f"Database connection trace error: {e}")
+                st.error(f"Fout bij het verbinden met de database: {e}")
 
             with tab5:
-                st.subheader("📋 Student Activity & Task Verification Logs")
+                st.subheader("📋 Logboek studentenactiviteiten en taakverificatie")
                 
                 # 1. Quietly refresh this panel every 5 seconds to listen for new student requests
                 from streamlit_autorefresh import st_autorefresh
@@ -288,22 +288,22 @@ elif st.session_state.role == "teacher":
                     pending_tasks = task_query.data
     
                     if not pending_tasks:
-                        st.info("There are currently no active classroom service requests pending.")
+                        st.info("Er zijn momenteel geen actieve aanvragen voor klassendiensten.")
                     else:
-                        st.write("### Active Classroom Service Requests")
+                        st.write("### Actieve aanvragen voor klassendiensten")
                         for requested_job in pending_tasks:
                             with st.container(border=True):
                                 t_col1, t_col2, t_col3 = st.columns(spec=3)
                                 
                                 with t_col1:
-                                    st.markdown(f"👤 **{requested_job['student_name']}** wants to do:")
+                                    st.markdown(f"👤 **{requested_job['student_name']}** wil het volgende doen:")
                                     st.markdown(f"### {requested_job['task_name']}")
                                 with t_col2:
-                                    st.markdown(f"🪙 **Value:** `{requested_job['points_value']} Tokens`")
+                                    st.markdown(f"🪙 **Waarde:** `{requested_job['points_value']} Tokens`")
                                 with t_col3:
                                     # 3. Secure Verification Trigger Action Button
                                     approve_key = f"approve_task_{requested_job['id']}"
-                                    if st.button("Job Finished ✔️", key=approve_key, use_container_width=True):
+                                    if st.button("Taak voltooid ✔️", key=approve_key, use_container_width=True):
                                         
                                         # A. Update the task status block inside Supabase to 'approved'
                                         supabase_local.table("tasks").update({"status": "approved"}).eq("id", requested_job['id']).execute()
@@ -316,8 +316,8 @@ elif st.session_state.role == "teacher":
                                         # C. Push the updated token balance directly into their student wallet
                                         supabase_local.table("profiles").update({"tokens": new_token_total}).eq("username", requested_job['student_name']).execute()
                                         
-                                        st.success(f"Task verified! `{requested_job['points_value']}` tokens credited to {requested_job['student_name']}.")
+                                        st.success(f"Taak geverifieerd! `{requested_job['points_value']}` tokens zijn bijgeschreven voor {requested_job['student_name']}.")
                                         st.rerun()
                                         
                 except Exception as e:
-                    st.error(f"Database connection trace error: {e}")
+                    st.error(f"Fout bij het verbinden met de database: {e}")
