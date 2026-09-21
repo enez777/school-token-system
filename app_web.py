@@ -175,7 +175,14 @@ if st.session_state.role == "student":
     # --- TEACHER VIEW ---
 elif st.session_state.role == "teacher":
         st.header("👨‍🏫 Dashboard voor studentenbeheer")
-        
+
+        # --- STUDENT SEARCH BAR ---
+        student_search = st.text_input(
+            "🔎 Zoek student",
+            placeholder="Zoek op Student-ID of naam...",
+            key="student_search"
+        ).strip().lower()
+
         tab1, tab2, tab3, tab4, tab5 = st.tabs(["Punten toekennen", "Student registreren", "Geregistreerde studenten", "claims", "activiteitsaanvragen"])
         
         with tab1:
@@ -217,8 +224,20 @@ elif st.session_state.role == "teacher":
             if not data.get("students"):
                 st.write("*Er zijn nog geen studenten geregistreerd in de database.*")
             else:
-                for sid, info in data.get("students", {}).items():
-                    st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} punten`")
+                # --- SEARCH FILTER FOR STUDENT ROSTER ---
+                filtered_students = {
+                    sid: info
+                    for sid, info in data.get("students", {}).items()
+                    if not student_search
+                    or student_search in sid.lower()
+                    or student_search in info["name"].lower()
+                }
+
+                if not filtered_students:
+                    st.info("🔎 Geen studenten gevonden voor deze zoekopdracht.")
+                else:
+                    for sid, info in filtered_students.items():
+                        st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} punten`")
 
 
         with tab4:
@@ -242,8 +261,18 @@ elif st.session_state.role == "teacher":
                 response = query.eq("status", "open").order("created_at").execute()
                 open_claims = response.data
 
+                # --- SEARCH FILTER FOR CLAIMS ---
+                if student_search:
+                    open_claims = [
+                        claim for claim in open_claims
+                        if student_search in str(claim.get("student_name", "")).lower()
+                    ]
+
                 if not open_claims:
-                    st.info("Er zijn momenteel geen openstaande aanvragen. Goed gedaan!")
+                    if student_search:
+                        st.info("🔎 Geen openstaande aanvragen gevonden voor deze student.")
+                    else:
+                        st.info("Er zijn momenteel geen openstaande aanvragen. Goed gedaan!")
                 else:
                     for claim in open_claims:
                         # Clean up the timestamp layout format
@@ -286,9 +315,19 @@ elif st.session_state.role == "teacher":
     
                     task_query = supabase_local.table("tasks").select("*").eq("status", "requested").order("created_at").execute()
                     pending_tasks = task_query.data
+
+                    # --- SEARCH FILTER FOR ACTIVITY REQUESTS ---
+                    if student_search:
+                        pending_tasks = [
+                            requested_job for requested_job in pending_tasks
+                            if student_search in str(requested_job.get("student_name", "")).lower()
+                        ]
     
                     if not pending_tasks:
-                        st.info("Er zijn momenteel geen actieve aanvragen voor klassendiensten.")
+                        if student_search:
+                            st.info("🔎 Geen actieve aanvragen gevonden voor deze student.")
+                        else:
+                            st.info("Er zijn momenteel geen actieve aanvragen voor klassendiensten.")
                     else:
                         st.write("### Actieve aanvragen voor klassendiensten")
                         for requested_job in pending_tasks:
