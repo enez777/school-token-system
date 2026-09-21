@@ -53,7 +53,7 @@ if "logged_in" not in st.session_state:
 
 if not st.session_state.logged_in:
     st.subheader("🔐 Inloggen")
-    user_input = st.text_input("Gebruikersnaam (Student-ID of 'Leraar')").strip().upper()
+    user_input = st.text_input("Gebruikersnaam (Student-ID of 'docent')").strip().upper()
     password_input = st.text_input("Wachtwoord (Alleen voor personeel)", type="password").strip()
     
     if st.button("Inloggen", use_container_width=True):
