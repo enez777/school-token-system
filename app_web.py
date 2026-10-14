@@ -1,4 +1,324 @@
-                      import pandas as pd
+import streamlit as st
+import school_db
+from streamlit.components.v1 import html
+# Configure the web page layout (Moet als allereerste Streamlit commando)
+st.set_page_config(
+    page_title="School Token Portaal",
+    page_icon="🏆",
+    layout="centered",
+    initial_sidebar_state="expanded",
+)
+
+# Forceer mobiele en desktop toolbar deactivatie
+st.set_option("client.toolbarMode", "viewer")
+
+# --- JAVASCRIPT OM WATERMERKEN TE VERWIJDEREN ---
+html('''
+<script>
+    const wipeWatermarks = () => {
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(el => {
+            el.setAttribute("style", "display: none !important; visibility: hidden !important;");
+        });
+        window.top.document.querySelectorAll('footer').forEach(footer => {
+            footer.setAttribute("style", "display: none !important;");
+        });
+    };
+    wipeWatermarks();
+    setInterval(wipeWatermarks, 500);
+</script>
+''', height=0)
+
+# --- CSS OVERRIDE VOOR SCHONE LAYOUT ---
+global_hide_style = """
+    <style>
+    header[data-testid="stHeader"] { display: none !important; visibility: hidden !important; height: 0px !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    div[class*="viewerBadge_container"] { display: none !important; visibility: hidden !important; }
+    footer { display: none !important; visibility: hidden !important; height: 0px !important; }
+    .block-container { padding-top: 1.5rem !important; }
+    </style>
+"""
+st.markdown(global_hide_style, unsafe_allow_html=True)
+
+st.title("🏆 School Token Portaal")
+
+# --- TOAST GEHEUGENSYSTEM ---
+# Als er een succesbericht is opgeslagen na de herlaadactie, laat hem nu rustig zien!
+if "success_message" in st.session_state and st.session_state.success_message:
+    st.toast(st.session_state.success_message, icon="🏆")
+    st.session_state.success_message = None
+
+# --- LOGIN REGION ---
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.role = None
+    st.session_state.student_id = ""
+    st.session_state.teacher_email = ""
+    st.session_state.success_message = None
+
+if not st.session_state.logged_in:
+    st.subheader("🔐 Inloggen")
+    user_input = st.text_input(
+        "Gebruikersnaam (Student-ID of docentnaam)"
+    ).strip()
+    password_input = st.text_input(
+        "Wachtwoord (alleen voor docenten)", type="password"
+    ).strip()
+
+    if st.button("Inloggen", use_container_width=True):
+        data = school_db.load_data()
+        student_id_input = user_input.upper()
+
+        # Student login stays the same: students use their existing Student ID.
+        if student_id_input in data.get("students", {}):
+            st.session_state.logged_in = True
+            st.session_state.role = "student"
+            st.session_state.student_id = student_id_input
+            st.rerun()
+        else:
+            # Teacher login: teachers type a username, while Supabase Auth uses
+            # the real email stored for that username in teacher_accounts.
+            from supabase import create_client
+
+            SUPABASE_URL = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+            SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+
+            try:
+                teacher_username = user_input.strip().lower()
+                if not teacher_username or any(
+                    not (char.isalnum() or char in "._-")
+                    for char in teacher_username
+                ):
+                    st.error("❌ Gebruik voor een docentnaam alleen letters, cijfers, punten, _ of -.")
+                    st.stop()
+
+                # This privileged key must be configured in Streamlit Secrets,
+                # never committed to GitHub or shown in the app.
+                service_role_key = st.secrets["SUPABASE_SERVICE_ROLE_KEY"]
+                supabase_admin = create_client(SUPABASE_URL, service_role_key)
+                lookup = (
+                    supabase_admin.table("teacher_accounts")
+                    .select("email, user_id")
+                    .eq("username", teacher_username)
+                    .eq("active", True)
+                    .limit(1)
+                    .execute()
+                )
+
+                if not lookup.data:
+                    st.error("❌ Ongeldige gebruikersnaam of wachtwoord.")
+                else:
+                    teacher_record = lookup.data[0]
+                    supabase_auth = create_client(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+                    auth_result = supabase_auth.auth.sign_in_with_password({
+                        "email": teacher_record["email"],
+                        "password": password_input,
+                    })
+
+                    if not auth_result.user or auth_result.user.id != teacher_record["user_id"]:
+                        st.error("❌ Ongeldige gebruikersnaam of wachtwoord.")
+                    else:
+                        # Confirm permission with the signed-in user's own session.
+                        teacher_check = (
+                            supabase_auth.table("teacher_accounts")
+                            .select("user_id")
+                            .eq("user_id", auth_result.user.id)
+                            .eq("username", teacher_username)
+                            .eq("active", True)
+                            .limit(1)
+                            .execute()
+                        )
+                        if teacher_check.data:
+                            st.session_state.logged_in = True
+                            st.session_state.role = "teacher"
+                            st.session_state.teacher_email = teacher_record["email"]
+                            st.rerun()
+                        else:
+                            supabase_auth.auth.sign_out()
+                            st.error("❌ Dit account is niet gemachtigd als docent.")
+            except Exception as e:
+                if "SUPABASE_SERVICE_ROLE_KEY" in str(e):
+                    st.error("❌ Stel SUPABASE_SERVICE_ROLE_KEY in bij Streamlit Secrets voordat je docentlogin gebruikt.")
+                else:
+                    st.error("❌ Inloggen mislukt. Controleer de gebruikersnaam, het wachtwoord en de docentinstellingen.")
+
+# --- APPLICATION DASHBOARD ---
+else:
+    st.sidebar.write(f"Ingelogd als: **{st.session_state.role.title()}**")
+    if st.sidebar.button("Uitloggen"):
+        st.session_state.logged_in = False
+        st.session_state.role = None
+        st.session_state.student_id = ""
+        st.session_state.success_message = None
+        st.rerun()
+
+    data = school_db.load_data()
+
+    # --- STUDENT VIEW ---
+if st.session_state.role == "student":
+        st.header("🎒 leerlingen dashboard")
+        student_info = data["students"][st.session_state.student_id]
+
+        st.metric(label=f"Welkom terug, {student_info['name']}!", value=f"{student_info['points']} Tokens")
+
+        st.write("---")
+        st.subheader("🎁 Beloningen inwisselen")
+        available_rewards = list(data.get("rewards", {}).keys())
+        selected_reward = st.selectbox("Kies je beloning:", available_rewards)
+
+        if st.button("Beloning inwisselen", type="primary", use_container_width=True):
+            success, message = school_db.process_redemption(st.session_state.student_id, selected_reward)
+            if success:
+                from supabase import create_client
+                url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+                key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+                supabase = create_client(url, key)
+                # 🟢 Logs the transaction automatically inside your Supabase claims table
+                try:
+                    supabase.table("claims").insert({
+                        "student_name": student_info['name'],
+                        "reward_name": selected_reward,
+                        "status": "open"
+                    }).execute()
+                except Exception as e:
+                    st.warning(f"Tokens afgetrokken, maar de melding naar de lerarendatabase is mislukt: {e}")
+                    
+                st.session_state.success_message = message
+                st.rerun()
+            else:
+                st.error(message)
+        st.write("---")
+        st.subheader("🎒 Extra Tokens verdienen: Klassikale opdrachten")
+        st.info("💡 Zo werkt het: Vraag hieronder een taak aan. Zodra je leraar deze heeft goedgekeurd en je de taak hebt voltooid, ga je naar je leraar. Die geeft je het aantal punten dat bij de taak hoort!")
+
+        # 1. Define available tasks, token values, and descriptions
+        available_tasks = [
+            {"name": "🧹 Klaslokaal schoonmaken", "points": 15, "desc": "Veeg de vloer van het klaslokaal, ruim de bureaus op en maak de whiteboards schoon."},
+            {"name": "🧮 Assistent bij wiskunde", "points": 20, "desc": "Help de leraar met het uitleggen of opstellen van een wiskundige oplossing op het bord."},
+            {"name": "📚 Jonge helper", "points": 10, "desc": "Help leraren hun klas klaar te zetten voordat jouw les begint."},
+            {"name": "🗑️ Recycling en afvaldienst", "points": 10, "desc": "Leeg de papierbak van het klaslokaal in de container op de gang."},
+            {"name": "strong delivery man","points":20, "desc": "Help met het bezorgen van zware spullen zoals dozen, stoelen en tafels en misschien nog meer."}
+        ]
+
+        # 2. Render each task in a clean grid card layout container
+        for task in available_tasks:
+            with st.container(border=True):
+                col1, col2 = st.columns(spec=2)
+                with col1:
+                    st.markdown(f"### {task['name']}")
+                    st.write(task['desc'])
+                    st.markdown(f"🪙 **Beloning:** `{task['points']} Tokens`")
+                with col2:
+# Dynamic string formatting ensures unique widget key profiles
+                    button_key = f"req_{task['name'].lower().replace(' ', '_')}"
+
+                    if st.button("Taak aanvragen 📝", key=button_key, use_container_width=True):
+                        try:
+                            from supabase import create_client
+                            url = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+                            key = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+                            supabase_local = create_client(url, key)
+
+# 3. Check for existing active requests to prevent student spam
+                            check_query = supabase_local.table("tasks").select("*").eq("student_name", student_info['name']).eq("task_name", task['name']).eq("status", "requested").execute()
+
+                            if check_query.data:
+                                st.warning("Je hebt al een actieve aanvraag voor deze taak!")
+                            else:
+# 4. Push structural metadata row down to your Supabase tasks table
+                                task_record = {
+                                    "student_name": student_info['name'],
+                                    "task_name": task['name'],
+                                    "points_value": task['points'],
+                                    "status": "requested"
+                                }
+                                supabase_local.table("tasks").insert(task_record).execute()
+                                st.success("Taak succesvol aangevraagd! Laat je leraar weten dat je klaar bent om te beginnen.")
+                                st.rerun()
+
+                        except Exception as e:
+                            st.error(f"Synchronisatie van het taakportaal is mislukt: {e}")
+
+                
+                    
+
+
+    # --- TEACHER VIEW ---
+elif st.session_state.role == "teacher":
+        st.header("👨‍🏫 Dashboard voor studentenbeheer")
+
+        # --- STUDENT SEARCH BAR ---
+        student_search = st.text_input(
+            "🔎 Zoek student",
+            placeholder="Zoek op Student-ID of naam...",
+            key="student_search"
+        ).strip().lower()
+
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Punten toekennen", "Student registreren", "Geregistreerde studenten", "claims", "activiteitsaanvragen"])
+        
+        with tab1:
+            st.subheader("➕ Tokens toekennen")
+            student_list = list(data.get("students", {}).keys())
+            if not student_list:
+                st.warning("⚠️ Er zijn nog geen studenten geregistreerd. Ga eerst naar het tabblad Registreren.")
+            else:
+                target_student = st.selectbox("Selecteer Student-ID:", student_list)
+                points_to_add = st.number_input("Aantal punten om toe te kennen:", min_value=1, step=1, value=10)
+                
+                if st.button("Punten toekennen", type="primary", use_container_width=True):
+                    success, new_balance, name = school_db.add_points_to_student(target_student, points_to_add)
+                    if success:
+                        # We slaan het bericht eerst op en herladen daarna pas!
+                        st.session_state.success_message = f"✅ {points_to_add} punten toegekend aan {name}! Nieuw totaal: {new_balance}"
+                        st.rerun()
+                    else:
+                        st.error("❌ Transactie mislukt.")
+                        
+        with tab2:
+            st.subheader("📝 Nieuwe student registreren")
+            new_id = st.text_input("Maak Student-ID aan (bijv. 12345)").strip().upper()
+            new_name = st.text_input("Voer naam van student in").strip()
+            
+            if st.button("Student registreren", type="primary", use_container_width=True):
+                if not new_id or not new_name:
+                    st.error("❌ Vul beide velden in.")
+                else:
+                    success, message = school_db.register_new_student(new_id, new_name)
+                    if success:
+                        st.session_state.success_message = f"✅ {message}"
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {message}")
+            
+        with tab3:
+            st.subheader("📊 Overzicht studenten")
+            if not data.get("students"):
+                st.write("*Er zijn nog geen studenten geregistreerd in de database.*")
+            else:
+                # --- SEARCH FILTER FOR STUDENT ROSTER ---
+                filtered_students = {
+                    sid: info
+                    for sid, info in data.get("students", {}).items()
+                    if not student_search
+                    or student_search in sid.lower()
+                    or student_search in info["name"].lower()
+                }
+
+                if not filtered_students:
+                    st.info("🔎 Geen studenten gevonden voor deze zoekopdracht.")
+                else:
+                    for sid, info in filtered_students.items():
+                        st.write(f"🔹 **{sid}**: {info['name']} — `{info['points']} punten`")
+
+
+        with tab4:
+            st.subheader("📝 Openstaande aanvragen voor studentbeloningen")
+
+            # 1. Quietly refresh this tab every 5 seconds to look for new student claims
+            from streamlit_autorefresh import st_autorefresh
+            st_autorefresh(interval=5000, key="live_claims_refresh")
+
+            import pandas as pd
             from supabase import create_client
 
             # 2. Your working database credentials
