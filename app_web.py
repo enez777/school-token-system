@@ -1,4 +1,4 @@
-            import pandas as pd
+                      import pandas as pd
             from supabase import create_client
 
             # 2. Your working database credentials
