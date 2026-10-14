@@ -1,9 +1,13 @@
 import streamlit as st
 import school_db
 from streamlit.components.v1 import html
-st.set_page_config(initial_sidebar_state="expanded")
 # Configure the web page layout (Moet als allereerste Streamlit commando)
-st.set_page_config(page_title="School Token Portaal", page_icon="🏆", layout="centered")
+st.set_page_config(
+    page_title="School Token Portaal",
+    page_icon="🏆",
+    layout="centered",
+    initial_sidebar_state="expanded",
+)
 
 # Forceer mobiele en desktop toolbar deactivatie
 st.set_option("client.toolbarMode", "viewer")
@@ -49,27 +53,78 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
     st.session_state.student_id = ""
+    st.session_state.teacher_email = ""
     st.session_state.success_message = None
 
 if not st.session_state.logged_in:
     st.subheader("🔐 Inloggen")
-    user_input = st.text_input("Gebruikersnaam (Student-ID of 'docent')").strip().upper()
-    password_input = st.text_input("Wachtwoord (Alleen voor personeel)", type="password").strip()
-    
+    user_input = st.text_input(
+        "Gebruikersnaam (Student-ID of docentnaam)"
+    ).strip()
+    password_input = st.text_input(
+        "Wachtwoord (alleen voor docenten)", type="password"
+    ).strip()
+
     if st.button("Inloggen", use_container_width=True):
         data = school_db.load_data()
-        
-        if user_input == "DOCENT" and password_input == "password":
-            st.session_state.logged_in = True
-            st.session_state.role = "teacher"
-            st.rerun()
-        elif user_input in data.get("students", {}):
+        student_id_input = user_input.upper()
+
+        # Student login stays the same: students use their existing Student ID.
+        if student_id_input in data.get("students", {}):
             st.session_state.logged_in = True
             st.session_state.role = "student"
-            st.session_state.student_id = user_input
+            st.session_state.student_id = student_id_input
             st.rerun()
         else:
-            st.error("❌ Ongeldige inloggegevens.")
+            # Teacher login uses Supabase Auth instead of the shared hardcoded password.
+            from supabase import create_client
+
+            SUPABASE_URL = "https://iyajpmuprtpsulwkwpvt.supabase.co"
+            SUPABASE_KEY = "sb_publishable_Q1g2IiG0sjySDscB-yhhuw_oZkPzFNH"
+
+            try:
+                supabase_auth = create_client(SUPABASE_URL, SUPABASE_KEY)
+                # Supabase Auth uses an email internally. Teachers only enter a
+                # username; this reserved .invalid address is generated behind the scenes.
+                # When creating a teacher in Supabase, use the same generated address.
+                teacher_username = user_input.lower()
+                if not teacher_username or any(
+                    not (char.isalnum() or char in "._-")
+                    for char in teacher_username
+                ):
+                    st.error("❌ Gebruik voor een docentnaam alleen letters, cijfers, punten, _ of -.")
+                    st.stop()
+
+                internal_email = f"{teacher_username}@teachers.schooltoken.invalid"
+                auth_result = supabase_auth.auth.sign_in_with_password({
+                    "email": internal_email,
+                    "password": password_input,
+                })
+
+                if not auth_result.user:
+                    st.error("❌ Ongeldige inloggegevens.")
+                else:
+                    # Only users listed in teacher_accounts are allowed into the teacher dashboard.
+                    teacher_check = (
+                        supabase_auth.table("teacher_accounts")
+                        .select("user_id")
+                        .eq("user_id", auth_result.user.id)
+                        .eq("username", teacher_username)
+                        .eq("active", True)
+                        .limit(1)
+                        .execute()
+                    )
+
+                    if teacher_check.data:
+                        st.session_state.logged_in = True
+                        st.session_state.role = "teacher"
+                        st.session_state.teacher_email = teacher_username
+                        st.rerun()
+                    else:
+                        supabase_auth.auth.sign_out()
+                        st.error("❌ Dit account is niet gemachtigd als docent.")
+            except Exception:
+                st.error("❌ Ongeldige gebruikersnaam of wachtwoord, of dit account is niet ingesteld als docent.")
 
 # --- APPLICATION DASHBOARD ---
 else:
